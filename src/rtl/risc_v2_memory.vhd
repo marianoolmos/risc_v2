@@ -1,12 +1,12 @@
 --====================================================================
 --
---   /$$$$$$$  /$$$$$$  /$$$$$$   /$$$$$$        /$$    /$$  /$$$$$$
---  | $$__  $$|_  $$_/ /$$__  $$ /$$__  $$      | $$   | $$ /$$__  $$
---  | $$  \ $$  | $$  | $$  \__/| $$  \__/      | $$   | $$|__/  \ $$
---  | $$$$$$$/  | $$  |  $$$$$$ | $$            |  $$ / $$/  /$$$$$$/
---  | $$__  $$  | $$   \____  $$| $$             \  $$ $$/  /$$____/
---  | $$  \ $$  | $$   /$$  \ $$| $$    $$        \  $$$/  | $$
---  | $$  | $$ /$$$$$$|  $$$$$$/|  $$$$$$/         \  $/   | $$$$$$$$
+--   /@@@@@@@  /@@@@@@  /@@@@@@   /@@@@@@        /@@    /@@  /@@@@@@
+--  | @@__  @@|_  @@_/ /@@__  @@ /@@__  @@      | @@   | @@ /@@__  @@
+--  | @@  \ @@  | @@  | @@  \__/| @@  \__/      | @@   | @@|__/  \ @@
+--  | @@@@@@@/  | @@  |  @@@@@@ | @@            |  @@ / @@/  /@@@@@@/
+--  | @@__  @@  | @@   \____  @@| @@             \  @@ @@/  /@@____/
+--  | @@  \ @@  | @@   /@@  \ @@| @@    @@        \  @@@/  | @@
+--  | @@  | @@ /@@@@@@|  @@@@@@/|  @@@@@@/         \  @/   | @@@@@@@@
 --  |__/  |__/|______/ \______/  \______/           \_/    |________/
 --
 -- Module:       RISC_V2_MEMORY
@@ -54,10 +54,12 @@ entity ram_memory is
     G_ADDR_WIDTH : integer := 17
   );
   port (
-
+    
+    clk_a  :     std_logic;
     port_a_i : in t_dp_in;
     port_a_o : out t_dp_out;
 
+    clk_b  :     std_logic;
     port_b_i : in t_dp_in;
     port_b_o : out t_dp_out
 
@@ -74,10 +76,10 @@ architecture syn of ram_memory is
 
 begin
 
-  port_a : process (port_a_i.clk) is
+  port_a : process (clk_a) is
   begin
 
-    if rising_edge(port_a_i.clk) then
+    if rising_edge(clk_a) then
       if (port_a_i.en = '1') then
         port_a_o.do <= RAM(to_integer(unsigned(port_a_i.addr)));
         if (port_a_i.we = '1') then
@@ -96,10 +98,10 @@ begin
 
   end process port_a;
 
-  port_b : process (port_b_i.clk) is
+  port_b : process (clk_b) is
   begin
 
-    if rising_edge(port_b_i.clk) then
+    if rising_edge(clk_b) then
       if (port_b_i.en = '1') then
         port_b_o.do <= RAM(to_integer(unsigned(port_b_i.addr)));
         if (port_b_i.we = '1') then
