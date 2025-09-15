@@ -74,8 +74,6 @@ architecture syn of ram_memory is
   type ram_type is array ((2 ** ADDR_WIDTH) - 1 downto 0) of std_logic_vector(MEM_WIDTH - 1 downto 0);
 
   constant num_bytes  : integer                                := mem_width / 8;
-  constant byte_index : unsigned((mem_width / 8) - 1 downto 0) := (others => '1');
-
   shared variable ram : ram_type;
 
 begin
@@ -90,8 +88,8 @@ begin
 
           write_byte_a : for i in 0 to num_bytes-1 loop
 
-            if (be_a = STD_LOGIC_VECTOR(shift_right(byte_index, i))) then
-              ram(to_integer(unsigned(addr_a))) := di_a((mem_width-1)-(8 * i) downto 0);
+            if (be_a(i)='1') then
+              ram(to_integer(unsigned(addr_a)))(8*i+7 downto 8*i) := di_a(8*i+7 downto 8*i);
             end if;
 
           end loop;
@@ -112,8 +110,8 @@ begin
 
           write_byte_b : for i in 0 to num_bytes-1 loop
 
-            if (be_b = STD_LOGIC_VECTOR(shift_right(byte_index, i))) then
-              ram(to_integer(unsigned(addr_b))) := di_b((mem_width-1)-(8 * i) downto 0);
+            if (be_b(i) = '1') then
+              ram(to_integer(unsigned(addr_b)))(8*i+7 downto 8*i) := di_b(8*i+7 downto 8*i);
             end if;
 
           end loop;
@@ -124,9 +122,19 @@ begin
 
   end process port_b;
 
-  --
-  assert (MEM_WIDTH mod 8 = 0)
-    report "MEM_WIDTH must be a multiple of 8"
-    severity failure;
+--sim
+-- pragma translate_off
+assert not (en_a='1' and we_a='1' and en_b='1' and we_b='1' and addr_a=addr_b)
+  report "ERROR: WRITE/WRITE on the same address"
+  severity error;
+
+assert not (en_a='1' and we_a='0' and en_b='1' and we_b='1' and addr_a=addr_b)
+  report "ERROR: READ(A)/WRITE(B) on the same address"
+  severity warning;
+
+assert not (en_a='1' and we_a='1' and en_b='1' and we_b='0' and addr_a=addr_b)
+  report "ERROR: WRITE(A)/READ(B) on the same address"
+  severity warning;
+-- pragma translate_on
 
 end architecture syn;
