@@ -45,51 +45,47 @@ library ieee;
   use ieee.numeric_std.all;
   use ieee.math_real.all;
 
+  use work.risc_v2_pkg.all;
+
+
 entity ram_memory is
   generic (
-    mem_width  : integer := 32;
-    addr_width : integer := 17
+    G_MEM_WIDTH  : integer := 32;
+    G_ADDR_WIDTH : integer := 17
   );
   port (
-    clk_b  : in    std_logic;
-    addr_b : in    std_logic_vector(addr_width - 1 downto 0);
-    di_b   : in    std_logic_vector(mem_width - 1 downto 0);
-    en_b   : in    std_logic;
-    we_b   : in    std_logic;
-    be_a   : in    std_logic_vector((mem_width / 8) - 1 downto 0);
-    do_b   : out   std_logic_vector(mem_width - 1 downto 0);
 
-    clk_a  : in    std_logic;
-    addr_a : in    std_logic_vector(addr_width - 1 downto 0);
-    di_a   : in    std_logic_vector(mem_width - 1 downto 0);
-    en_a   : in    std_logic;
-    we_a   : in    std_logic;
-    be_b   : in    std_logic_vector((mem_width / 8) - 1 downto 0);
-    do_a   : out   std_logic_vector(mem_width - 1 downto 0)
+    port_a_i : in t_dp_in;
+    port_a_o : out t_dp_out;
+
+    port_b_i : in t_dp_in;
+    port_b_o : out t_dp_out
+
+
   );
 end entity ram_memory;
 
 architecture syn of ram_memory is
 
-  type ram_type is array ((2 ** ADDR_WIDTH) - 1 downto 0) of std_logic_vector(MEM_WIDTH - 1 downto 0);
+  type ram_type is array ((2 ** G_ADDR_WIDTH) - 1 downto 0) of std_logic_vector(G_MEM_WIDTH - 1 downto 0);
 
-  constant num_bytes  : integer                                := mem_width / 8;
+  constant num_bytes  : integer                                := G_MEM_WIDTH / 8;
   shared variable ram : ram_type;
 
 begin
 
-  port_a : process (clk_a) is
+  port_a : process (port_a_i.clk) is
   begin
 
-    if rising_edge(clk_a) then
-      if (en_a = '1') then
-        do_a <= RAM(to_integer(unsigned(addr_a)));
-        if (we_a = '1') then
+    if rising_edge(port_a_i.clk) then
+      if (port_a_i.en = '1') then
+        port_a_o.do <= RAM(to_integer(unsigned(port_a_i.addr)));
+        if (port_a_i.we = '1') then
 
           write_byte_a : for i in 0 to num_bytes-1 loop
 
-            if (be_a(i)='1') then
-              ram(to_integer(unsigned(addr_a)))(8*i+7 downto 8*i) := di_a(8*i+7 downto 8*i);
+            if (port_a_i.be(i)='1') then
+              ram(to_integer(unsigned(port_a_i.addr)))(8*i+7 downto 8*i) := port_a_i.di(8*i+7 downto 8*i);
             end if;
 
           end loop;
@@ -100,18 +96,18 @@ begin
 
   end process port_a;
 
-  port_b : process (clk_b) is
+  port_b : process (port_b_i.clk) is
   begin
 
-    if rising_edge(clk_b) then
-      if (en_b = '1') then
-        do_b <= RAM(to_integer(unsigned(addr_b)));
-        if (we_b = '1') then
+    if rising_edge(port_b_i.clk) then
+      if (port_b_i.en = '1') then
+        port_b_o.do <= RAM(to_integer(unsigned(port_b_i.addr)));
+        if (port_b_i.we = '1') then
 
           write_byte_b : for i in 0 to num_bytes-1 loop
 
-            if (be_b(i) = '1') then
-              ram(to_integer(unsigned(addr_b)))(8*i+7 downto 8*i) := di_b(8*i+7 downto 8*i);
+            if (port_b_i.be(i) = '1') then
+              ram(to_integer(unsigned(port_b_i.addr)))(8*i+7 downto 8*i) := port_b_i.di(8*i+7 downto 8*i);
             end if;
 
           end loop;
@@ -124,15 +120,15 @@ begin
 
 --sim
 -- pragma translate_off
-assert not (en_a='1' and we_a='1' and en_b='1' and we_b='1' and addr_a=addr_b)
+assert not (port_a_i.en='1' and port_a_i.we='1' and port_b_i.en='1' and port_b_i.we='1' and port_a_i.addr=port_b_i.addr)
   report "ERROR: WRITE/WRITE on the same address"
   severity error;
 
-assert not (en_a='1' and we_a='0' and en_b='1' and we_b='1' and addr_a=addr_b)
+assert not (port_a_i.en='1' and port_a_i.we='0' and port_b_i.en='1' and port_b_i.we='1' and port_a_i.addr=port_b_i.addr)
   report "ERROR: READ(A)/WRITE(B) on the same address"
   severity warning;
 
-assert not (en_a='1' and we_a='1' and en_b='1' and we_b='0' and addr_a=addr_b)
+assert not (port_a_i.en='1' and port_a_i.we='1' and port_b_i.en='1' and port_b_i.we='0' and port_a_i.addr=port_b_i.addr)
   report "ERROR: WRITE(A)/READ(B) on the same address"
   severity warning;
 -- pragma translate_on

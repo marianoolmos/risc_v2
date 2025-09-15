@@ -9,7 +9,7 @@
 --  | $$  | $$ /$$$$$$|  $$$$$$/|  $$$$$$/         \  $/   | $$$$$$$$
 --  |__/  |__/|______/ \______/  \______/           \_/    |________/
 --
--- Module:       RISC_V2_DEC_EXE
+-- Module:       RISC_V2_PKG
 -- Description:  
 --
 -- Author:       Mariano Olmos Martin 
@@ -39,25 +39,33 @@
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 -- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 --======================================================================
+
 library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
   use ieee.math_real.all;
 
-  use work.risc_v2_pkg.all;
+package risc_v2_pkg is
+--Memory DualPort RAM Configuration
+constant C_ADDR_WIDTH  : integer := 17;
+constant C_MEM_WIDTH : integer := 32;
 
-entity risc_v2_dec_exe is
-    port (
-        clk   : in std_logic;
-        reset : in std_logic
-        
-    );
-end entity;
+type t_dp_in  is record
+    clk  :     std_logic;
+    addr :     std_logic_vector(C_ADDR_WIDTH - 1 downto 0);
+    di   :     std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+    en   :     std_logic;
+    we   :     std_logic;
+    be   :     std_logic_vector((C_MEM_WIDTH / 8) - 1 downto 0);
+end record;
 
-architecture rtl of risc_v2_dec_exe is
+type t_dp_out  is record
+    do   :    std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+end record;
 
-begin
 
+end package;
+
+package body risc_v2_pkg is
     
-
-end architecture;
+end package body;

@@ -39,3 +39,25 @@
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 -- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 --======================================================================
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+  use ieee.math_real.all;
+
+  use work.risc_v2_pkg.all;
+
+  entity risc_v2_alu is
+    port (
+        clk   : in std_logic;
+        reset : in std_logic
+        
+    );
+  end entity;
+
+  architecture rtl of risc_v2_alu is
+  
+  begin
+  
+    
+  
+  end architecture;

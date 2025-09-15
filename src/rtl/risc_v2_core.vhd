@@ -39,3 +39,40 @@
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 -- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 --======================================================================
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+  use ieee.math_real.all;
+
+  use work.risc_v2_pkg.all;
+
+entity risc_v2_core is
+    port (
+        clk   : in std_logic;
+        reset : in std_logic
+        
+    );
+end entity;
+
+architecture rtl of risc_v2_core is
+
+signal s_intf_instr_i : t_dp_in;
+signal s_intf_instr_o : t_dp_out;
+
+signal s_intf_data_i : t_dp_in;
+signal s_intf_data_o : t_dp_out;
+begin
+
+ram_memory_inst : entity work.ram_memory
+  generic map (
+    G_MEM_WIDTH => C_MEM_WIDTH,
+    G_ADDR_WIDTH => C_ADDR_WIDTH
+  )
+  port map (
+    port_a_i => s_intf_instr_i,
+    port_a_o => s_intf_instr_o,
+    port_b_i => s_intf_data_i,
+    port_b_o => s_intf_data_o
+  );
+
+end architecture;
