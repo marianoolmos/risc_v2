@@ -1,12 +1,12 @@
 --====================================================================
 --
---   /$$$$$$$  /$$$$$$  /$$$$$$   /$$$$$$        /$$    /$$  /$$$$$$
---  | $$__  $$|_  $$_/ /$$__  $$ /$$__  $$      | $$   | $$ /$$__  $$
---  | $$  \ $$  | $$  | $$  \__/| $$  \__/      | $$   | $$|__/  \ $$
---  | $$$$$$$/  | $$  |  $$$$$$ | $$            |  $$ / $$/  /$$$$$$/
---  | $$__  $$  | $$   \____  $$| $$             \  $$ $$/  /$$____/
---  | $$  \ $$  | $$   /$$  \ $$| $$    $$        \  $$$/  | $$
---  | $$  | $$ /$$$$$$|  $$$$$$/|  $$$$$$/         \  $/   | $$$$$$$$
+--   /@@@@@@@  /@@@@@@  /@@@@@@   /@@@@@@        /@@    /@@  /@@@@@@
+--  | @@__  @@|_  @@_/ /@@__  @@ /@@__  @@      | @@   | @@ /@@__  @@
+--  | @@  \ @@  | @@  | @@  \__/| @@  \__/      | @@   | @@|__/  \ @@
+--  | @@@@@@@/  | @@  |  @@@@@@ | @@            |  @@ / @@/  /@@@@@@/
+--  | @@__  @@  | @@   \____  @@| @@             \  @@ @@/  /@@____/
+--  | @@  \ @@  | @@   /@@  \ @@| @@    @@        \  @@@/  | @@
+--  | @@  | @@ /@@@@@@|  @@@@@@/|  @@@@@@/         \  @/   | @@@@@@@@
 --  |__/  |__/|______/ \______/  \______/           \_/    |________/
 --
 -- Module:       TB_RISC_V2_MEMORY
@@ -41,74 +41,113 @@
 --======================================================================
 
 library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-use std.env.finish;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+  use ieee.math_real.all;
+  use std.env.finish;
+  use work.risc_v2_pkg.all;
 
 library osvvm;
-context osvvm.OsvvmContext;
+  context osvvm.osvvmcontext;
+  use osvvm.scoreboardpkg_slv.all;
 
 entity tb_ram_memory is
-end;
+end entity tb_ram_memory;
 
 architecture bench of tb_ram_memory is
 
-  -- Generics
-  constant mem_width : integer := 32;
-  constant addr_width : integer := 17;
+  signal clk_a, clk_b : std_logic;
   -- Ports
-  signal clk_b : std_logic;
-  signal addr_b : std_logic_vector(addr_width - 1 downto 0);
-  signal di_b : std_logic_vector(mem_width - 1 downto 0);
-  signal en_b : std_logic;
-  signal we_b : std_logic;
-  signal be_a : std_logic_vector((mem_width / 8) - 1 downto 0);
-  signal do_b : std_logic_vector(mem_width - 1 downto 0);
-  signal clk_a : std_logic;
-  signal addr_a : std_logic_vector(addr_width - 1 downto 0);
-  signal di_a : std_logic_vector(mem_width - 1 downto 0);
-  signal en_a : std_logic;
-  signal we_a : std_logic;
-  signal be_b : std_logic_vector((mem_width / 8) - 1 downto 0);
-  signal do_a : std_logic_vector(mem_width - 1 downto 0);
+
+  signal s_if_instr_i : t_dp_in;
+  signal s_if_instr_o : t_dp_out;
+
+  signal s_if_data_i : t_dp_in;
+  signal s_if_data_o : t_dp_out;
+
+  signal sb : scoreboardidtype;
+
 begin
 
+  CreateClock(clk_a, 20 ns);
+  CreateClock(clk_b, 20 ns);
+
   ram_memory_inst : entity work.ram_memory
-  generic map (
-    mem_width => mem_width,
-    addr_width => addr_width
-  )
-  port map (
-    clk_b => clk_b,
-    addr_b => addr_b,
-    di_b => di_b,
-    en_b => en_b,
-    we_b => we_b,
-    be_a => be_a,
-    do_b => do_b,
-    clk_a => clk_a,
-    addr_a => addr_a,
-    di_a => di_a,
-    en_a => en_a,
-    we_a => we_a,
-    be_b => be_b,
-    do_a => do_a
-  );
+    generic map (
+      g_mem_width  => C_MEM_WIDTH,
+      g_addr_width => C_ADDR_WIDTH
+    )
+    port map (
+      clk_a    => clk_a,
+      port_a_i => s_if_instr_i,
+      port_a_o => s_if_instr_o,
 
- CreateClock(clk_a, 20 ns);
- CreateClock(clk_b, 20 ns);
+      clk_b    => clk_b,
+      port_b_i => s_if_data_i,
+      port_b_o => s_if_data_o
+    );
 
- process 
- begin
+  process is
 
-  wait for 100 ns;
+    variable vdata_in : std_logic_vector(31 downto 0);
+    variable tmp :unsigned((C_MEM_WIDTH/8)-1  downto 0):=(others => '1') ;
+  begin
 
-  --EndOfTestSummary;
-  --EndOfTestReports;
-  finish;
+    sb <= NewID("DP_SB");
+    SetTestName("WRITE-READ");
+    -- BYTE ENABLE
+    for j in 0 to (C_MEM_WIDTH/8)-1 loop
+      -- ADDR A read B
+      for i in 0 to ((2 ** C_ADDR_WIDTH) - 1) loop
 
-  
- end process;
+        s_if_instr_i.en   <= '1';
+        s_if_instr_i.we   <= '1';
+        tmp:= (shift_left(to_unsigned(1, tmp), j));
+        s_if_instr_i.be   <= std_logic_vector(tmp);
+        s_if_instr_i.addr <= std_logic_vector(to_unsigned(i, C_ADDR_WIDTH));
+        s_if_instr_i.di   <= std_logic_vector(to_unsigned(i, C_MEM_WIDTH));
+        vdata_in          :=std_logic_vector(to_unsigned(i, C_MEM_WIDTH));
+        wait for 100 ns;
+        Push(sb, vdata_in(8 * j + 7 downto 8 * j));
+        s_if_instr_i.en   <= '0';
+        s_if_instr_i.we   <= '0';
+        s_if_data_i.en    <= '1';
+        s_if_data_i.we    <= '0';
+        s_if_data_i.be    <= "1111";
+        wait for 0 ns;
+        s_if_data_i.addr  <= std_logic_vector(to_unsigned(i, C_ADDR_WIDTH));
+        wait for 100 ns;
+        Check(sb, s_if_data_o.do(8 * j + 7 downto 8 * j));
 
-end;
+      end loop;
+      --ADDR B READ A
+      for i in 0 to ((2 ** C_ADDR_WIDTH) - 1) loop
+
+        s_if_data_i.en    <= '1';
+        s_if_data_i.we    <= '1';
+        tmp:= (shift_left(to_unsigned(1, tmp), j));
+        s_if_data_i.be   <= std_logic_vector(tmp);
+        s_if_data_i.addr  <= std_logic_vector(to_unsigned(i, C_ADDR_WIDTH));
+        s_if_data_i.di    <= std_logic_vector(to_unsigned(i, C_MEM_WIDTH));
+        vdata_in          :=std_logic_vector(to_unsigned(i, C_MEM_WIDTH));
+        wait for 100 ns;
+        Push(sb, vdata_in(8 * j + 7 downto 8 * j));
+        s_if_data_i.en    <= '0';
+        s_if_data_i.we    <= '0';
+        s_if_instr_i.en   <= '1';
+        s_if_instr_i.we   <= '0';
+        s_if_instr_i.be   <= "1111";
+        wait for 0 ns;
+        s_if_instr_i.addr <= std_logic_vector(to_unsigned(i, C_ADDR_WIDTH));
+        wait for 100 ns;
+        Check(sb, s_if_instr_o.do(8 * j + 7 downto 8 * j));
+
+      end loop;
+    end loop;
+
+    ReportAlerts;
+    finish;
+
+  end process;
+
+end architecture bench;
