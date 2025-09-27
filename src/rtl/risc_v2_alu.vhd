@@ -49,6 +49,10 @@ library ieee;
   entity risc_v2_alu is
     port (
         clk   : in std_logic;
+        rs1   : in    std_logic_vector(31 downto 0);
+        imm   : in    std_logic_vector(31 downto 0);
+        rsi   : in    std_logic_vecotr(11 downto 0);
+        rd    : out    std_logic_vector(31 downto 0);
         reset : in std_logic
         
     );
@@ -58,6 +62,64 @@ library ieee;
   
   begin
   
-    
+    process (clk)
+    begin
+      if rising_edge(clk) then
+        case ins is
+          when c_add =>
+            rd <= rs1 + rs2;
+          when c_sub =>
+            rd <= rs1 - rs2;
+          when c_xor =>
+            rd <= rs1 xor rs2;
+          when c_or =>
+            rd <= rs1 or rs2;
+          when c_and =>
+            rd <= rs1 and rs2;
+          when c_sll =>
+            rd <= shift_left(rs1, rs2);
+          when c_srl =>
+            rd <= shift_right(rs1, rs2);
+          when c_sra =>
+            rd <= rs1 xor rs2;
+          when c_slt =>
+            rd <= rs1 xor rs2;
+          when c_sltu =>
+            rd <= rs1 xor rs2;
+          when others =>
+            null;
+        end case;
+      end if;
+    end process;
+  
+    process (clk)
+    begin
+      if rising_edge(clk) then
+        case insi is
+          when c_addi =>
+            rd <= rs1 + imm;
+          when c_subi =>
+            rd <= rs1 - imm;
+          when c_xori =>
+            rd <= rs1 xor imm;
+          when c_ori =>
+            rd <= rs1 or imm;
+          when c_andi =>
+            rd <= rs1 and imm;
+          when c_slli =>
+            rd <= shift_left(rs1, imm);
+          when c_srl =>
+            rd <= shift_right(rs1, imm);
+          when c_srai =>
+            rd <= rs1 xor imm;
+          when c_slti =>
+            rd <= rs1 xor imm;
+          when c_sltui =>
+            rd <= rs1 xor imm;
+          when others =>
+            null;
+        end case;
+      end if;
+    end process;
   
   end architecture;

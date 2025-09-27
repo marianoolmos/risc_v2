@@ -44,35 +44,30 @@ library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
   use ieee.math_real.all;
-
   use work.risc_v2_pkg.all;
-
 
 entity ram_memory is
   generic (
-    G_MEM_WIDTH  : integer := 32;
-    G_ADDR_WIDTH : integer := 17
+    g_mem_width  : integer := 32;
+    g_addr_width : integer := 17
   );
   port (
-    
-    clk_a  :     std_logic;
-    port_a_i : in t_dp_in;
-    port_a_o : out t_dp_out;
+    clk_a    :     std_logic;
+    port_a_i : in    t_dp_in;
+    port_a_o : out   t_dp_out;
 
-    clk_b  :     std_logic;
-    port_b_i : in t_dp_in;
-    port_b_o : out t_dp_out
-
-
+    clk_b    :     std_logic;
+    port_b_i : in    t_dp_in;
+    port_b_o : out   t_dp_out
   );
 end entity ram_memory;
 
-architecture syn of ram_memory is
+architecture rtl of ram_memory is
 
   type ram_type is array ((2 ** G_ADDR_WIDTH) - 1 downto 0) of std_logic_vector(G_MEM_WIDTH - 1 downto 0);
 
-  constant num_bytes  : integer                                := G_MEM_WIDTH / 8;
-  shared variable ram : ram_type;
+  constant        num_bytes : integer := g_mem_width / 8;
+  shared variable ram       : ram_type;
 
 begin
 
@@ -84,10 +79,10 @@ begin
         port_a_o.do <= RAM(to_integer(unsigned(port_a_i.addr)));
         if (port_a_i.we = '1') then
 
-          write_byte_a : for i in 0 to num_bytes-1 loop
+          write_byte_a : for i in 0 to num_bytes - 1 loop
 
-            if (port_a_i.be(i)='1') then
-              ram(to_integer(unsigned(port_a_i.addr)))(8*i+7 downto 8*i) := port_a_i.di(8*i+7 downto 8*i);
+            if (port_a_i.be(i) = '1') then
+              ram(to_integer(unsigned(port_a_i.addr)))(8 * i + 7 downto 8 * i) := port_a_i.di(8 * i + 7 downto 8 * i);
             end if;
 
           end loop;
@@ -106,10 +101,10 @@ begin
         port_b_o.do <= RAM(to_integer(unsigned(port_b_i.addr)));
         if (port_b_i.we = '1') then
 
-          write_byte_b : for i in 0 to num_bytes-1 loop
+          write_byte_b : for i in 0 to num_bytes - 1 loop
 
             if (port_b_i.be(i) = '1') then
-              ram(to_integer(unsigned(port_b_i.addr)))(8*i+7 downto 8*i) := port_b_i.di(8*i+7 downto 8*i);
+              ram(to_integer(unsigned(port_b_i.addr)))(8 * i + 7 downto 8 * i) := port_b_i.di(8 * i + 7 downto 8 * i);
             end if;
 
           end loop;
@@ -120,19 +115,19 @@ begin
 
   end process port_b;
 
---sim
--- pragma translate_off
-assert not (port_a_i.en='1' and port_a_i.we='1' and port_b_i.en='1' and port_b_i.we='1' and port_a_i.addr=port_b_i.addr)
-  report "ERROR: WRITE/WRITE on the same address"
-  severity error;
+  -- sim
+  -- pragma translate_off
+  assert not (port_a_i.en = '1' and port_a_i.we = '1' and port_b_i.en = '1' and port_b_i.we = '1' and port_a_i.addr = port_b_i.addr)
+    report "ERROR: WRITE/WRITE on the same address"
+    severity error;
 
-assert not (port_a_i.en='1' and port_a_i.we='0' and port_b_i.en='1' and port_b_i.we='1' and port_a_i.addr=port_b_i.addr)
-  report "ERROR: READ(A)/WRITE(B) on the same address"
-  severity warning;
+  assert not (port_a_i.en = '1' and port_a_i.we = '0' and port_b_i.en = '1' and port_b_i.we = '1' and port_a_i.addr = port_b_i.addr)
+    report "ERROR: READ(A)/WRITE(B) on the same address"
+    severity warning;
 
-assert not (port_a_i.en='1' and port_a_i.we='1' and port_b_i.en='1' and port_b_i.we='0' and port_a_i.addr=port_b_i.addr)
-  report "ERROR: WRITE(A)/READ(B) on the same address"
-  severity warning;
+  assert not (port_a_i.en = '1' and port_a_i.we = '1' and port_b_i.en = '1' and port_b_i.we = '0' and port_a_i.addr = port_b_i.addr)
+    report "ERROR: WRITE(A)/READ(B) on the same address"
+    severity warning;
 -- pragma translate_on
 
-end architecture syn;
+end architecture rtl;
