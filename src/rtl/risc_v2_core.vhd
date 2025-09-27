@@ -48,34 +48,38 @@ library ieee;
 
 entity risc_v2_core is
     port (
+      
         clk   : in std_logic;
-        reset : in std_logic
+        reset : in std_logic;
+        IF_INSTR_O : out  t_dp_in;
+        IF_INSTR_I : in   t_dp_out;
+        IF_RAM_DATA_O : out  t_dp_in;
+        IF_RAM_DATA_I : in   t_dp_out
         
     );
 end entity;
 
 architecture rtl of risc_v2_core is
 
-signal s_if_instr_i : t_dp_in;
-signal s_if_instr_o : t_dp_out;
 
-signal s_if_data_i : t_dp_in;
-signal s_if_data_o : t_dp_out;
 begin
 
-ram_memory_inst : entity work.ram_memory
-  generic map (
-    G_MEM_WIDTH => C_MEM_WIDTH,
-    G_ADDR_WIDTH => C_ADDR_WIDTH
-  )
+ fetch_inst : entity work.risc_v2_fetch
   port map (
-    clk_a    => clk,
-    port_a_i => s_if_instr_i,
-    port_a_o => s_if_instr_o,
-
-    clk_b    => clk,
-    port_b_i => s_if_data_i,
-    port_b_o => s_if_data_o
+    CLK => CLK,
+    IF_INSTR_O => IF_INSTR_O,
+    RESET => RESET
   );
+
+ risc_v2_dec_exe_inst : entity work.risc_v2_dec_exe
+  port map (
+    clk => clk,
+    reset => reset,
+    IF_RAM_DATA_O => IF_RAM_DATA_O,
+    IF_RAM_DATA_I => IF_RAM_DATA_I,
+    IF_INSTR_DATA_I => IF_INSTR_I
+  );
+
+
 
 end architecture;

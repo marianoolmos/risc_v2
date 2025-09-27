@@ -49,9 +49,9 @@ library ieee;
   entity risc_v2_alu is
     port (
         clk   : in std_logic;
-        rs1   : in    std_logic_vector(31 downto 0);
+        rs1,rs2   : in    std_logic_vector(31 downto 0);
         imm   : in    std_logic_vector(31 downto 0);
-        rsi   : in    std_logic_vecotr(11 downto 0);
+        rsi   : in    std_logic_vector(11 downto 0);
         rd    : out    std_logic_vector(31 downto 0);
         reset : in std_logic
         

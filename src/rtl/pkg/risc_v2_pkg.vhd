@@ -44,11 +44,25 @@ library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
   use ieee.math_real.all;
-
+  use ieee.std_logic_textio.all;
+  use std.textio.all;
 package risc_v2_pkg is
---Memory DualPort RAM Configuration
-constant C_ADDR_WIDTH  : integer := 17;
-constant C_MEM_WIDTH : integer := 32;
+
+  --Memory DualPort RAM Configuration
+  --*********************************
+  constant C_ADDR_WIDTH  : integer := 17;
+  constant C_MEM_WIDTH   : integer := 32;
+  constant C_NUM_BYTES   : integer := C_MEM_WIDTH / 8;
+  constant C_MEM_DEPTH   : integer := ((2 ** C_ADDR_WIDTH) - 1 );
+  constant C_INIT_FILE  : string := "rom_init.hex";
+
+  --Reg File Configuration
+  --**********************
+  constant C_REG_WIDTH : integer := 32;
+
+
+type ram_type is array (0 to C_MEM_DEPTH) of std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+impure function initRomFromFile(fname : in string) return ram_type;
 
 type t_dp_in  is record
     addr :     std_logic_vector(C_ADDR_WIDTH - 1 downto 0);
@@ -66,5 +80,19 @@ end record;
 end package;
 
 package body risc_v2_pkg is
-    
+
+  impure function initRomFromFile(fname : in string) return ram_type is
+    file data_file      : text open read_mode is fname;
+    variable data_line  : line;
+    variable rom        : ram_type := (others => (others => '0'));
+
+  begin
+    for i in ram_type'range loop
+      exit when endfile(data_file);
+      readline(data_file, data_line);
+      hread(data_line, rom(i));                
+    end loop;
+    return rom;
+  end function;
+  
 end package body;

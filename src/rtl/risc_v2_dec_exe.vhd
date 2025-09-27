@@ -49,14 +49,69 @@ library ieee;
 entity risc_v2_dec_exe is
     port (
         clk   : in std_logic;
-        reset : in std_logic
+        reset : in std_logic;
+        IF_RAM_DATA_O : out  t_dp_in;
+        IF_RAM_DATA_I : in   t_dp_out;
+        IF_INSTR_DATA_I : in t_dp_out
         
     );
 end entity;
 
 architecture rtl of risc_v2_dec_exe is
+  signal s_rs1,s_rs2 : std_logic_vector(C_MEM_WIDTH - 1 downto 0);
 
+  alias op_code : std_logic_vector(6 downto 0) is IF_INSTR_DATA_I.do(6 downto 0);
+  
 begin
+
+  process (clk)
+  begin
+    if rising_edge(clk) then
+      case op_code is
+        when OPC_OP    =>
+        when OPC_OP_IMM=>
+        when OPC_LOAD=>
+        when OPC_STORE=>
+        when OPC_BRANCH=>
+        when OPC_LUI=>
+        when OPC_AUIPC=>
+        when OPC_JAL=>
+        when OPC_JALR=>
+        when OPC_SYSTEM=>
+        when OPC_FENCE=>
+        when others =>
+          null;
+      end case;
+    end if;
+  end process;
+
+  
+risc_v2_reg_file_inst : entity work.risc_v2_reg_file
+  port map (
+    CLK_I => CLK_I,
+    RESET_I => RESET_I,
+    WE_I => WE_I,
+    LOAD_I => LOAD_I,
+    RS1_I => RS1_I,
+    RS2_I => RS2_I,
+    DIN_I => DIN_I,
+    DIN_LOAD_I => DIN_LOAD_I,
+    RD_I => RD_I,
+    RD_LOAD_I => RD_LOAD_I,
+    DOUT1_O => DOUT1_O,
+    DOUT2_O => DOUT2_O
+  );
+
+risc_v2_alu_inst : entity work.risc_v2_alu
+  port map (
+    clk => clk,
+    rs1 => s_rs1,
+    rs2 => s_rs2,
+    imm => imm,
+    rsi => rsi,
+    rd => rd,
+    reset => reset
+  );
 
     
 

@@ -44,42 +44,38 @@ library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
   use ieee.math_real.all;
+  use ieee.std_logic_textio.all;
+  use std.textio.all;
   use work.risc_v2_pkg.all;
 
 entity ram_memory is
-  generic (
-    g_mem_width  : integer := 32;
-    g_addr_width : integer := 17
-  );
+  
   port (
-    clk_a    :     std_logic;
-    port_a_i : in    t_dp_in;
-    port_a_o : out   t_dp_out;
+    CLK    :     std_logic;
+    
+    PORT_A_I : in    t_dp_in;
+    PORT_A_O : out   t_dp_out;
 
-    clk_b    :     std_logic;
-    port_b_i : in    t_dp_in;
-    port_b_o : out   t_dp_out
+    PORT_B_I : in    t_dp_in;
+    PORT_B_O : out   t_dp_out
   );
 end entity ram_memory;
 
 architecture rtl of ram_memory is
 
-  type ram_type is array ((2 ** G_ADDR_WIDTH) - 1 downto 0) of std_logic_vector(G_MEM_WIDTH - 1 downto 0);
-
-  constant        num_bytes : integer := g_mem_width / 8;
-  shared variable ram       : ram_type;
+  shared variable ram : ram_type := initRomFromFile(C_INIT_FILE);
 
 begin
 
-  port_a : process (clk_a) is
+  port_a : process (CLK) is
   begin
 
-    if rising_edge(clk_a) then
+    if rising_edge(CLK) then
       if (port_a_i.en = '1') then
-        port_a_o.do <= RAM(to_integer(unsigned(port_a_i.addr)));
+        PORT_A_O.DO <= RAM(to_integer(unsigned(port_a_i.addr)));
         if (port_a_i.we = '1') then
 
-          write_byte_a : for i in 0 to num_bytes - 1 loop
+          write_byte_a : for i in 0 to C_NUM_BYTES - 1 loop
 
             if (port_a_i.be(i) = '1') then
               ram(to_integer(unsigned(port_a_i.addr)))(8 * i + 7 downto 8 * i) := port_a_i.di(8 * i + 7 downto 8 * i);
@@ -93,15 +89,15 @@ begin
 
   end process port_a;
 
-  port_b : process (clk_b) is
+  port_b : process (CLK) is
   begin
 
-    if rising_edge(clk_b) then
+    if rising_edge(CLK) then
       if (port_b_i.en = '1') then
-        port_b_o.do <= RAM(to_integer(unsigned(port_b_i.addr)));
+        PORT_B_O.DO <= RAM(to_integer(unsigned(port_b_i.addr)));
         if (port_b_i.we = '1') then
 
-          write_byte_b : for i in 0 to num_bytes - 1 loop
+          write_byte_b : for i in 0 to C_NUM_BYTES - 1 loop
 
             if (port_b_i.be(i) = '1') then
               ram(to_integer(unsigned(port_b_i.addr)))(8 * i + 7 downto 8 * i) := port_b_i.di(8 * i + 7 downto 8 * i);

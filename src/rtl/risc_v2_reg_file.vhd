@@ -48,41 +48,60 @@ library ieee;
 
 entity risc_v2_reg_file is
   port (
-    clk   : in    std_logic;
-    reset : in    std_logic;
-    we    : in    std_logic;
-    rs1   : in    std_logic_vector(31 downto 0);
-    rs2   : in    std_logic_vector(31 downto 0);
-    din   : in    std_logic_vector(31 downto 0);
-    rd    : in    std_logic_vector(31 downto 0);
-    dout1 : out   std_logic_vector(31 downto 0);
-    dout2 : out   std_logic_vector(31 downto 0)
+    CLK_I   : in    std_logic;
+    RESET_I : in    std_logic;
+    WE_I    : in    std_logic;
+    LOAD_I  : in    std_logic;
+
+    RS1_I      : in    std_logic_vector(C_REG_WIDTH - 1 downto 0);
+    RS2_I      : in    std_logic_vector(C_REG_WIDTH - 1 downto 0);
+    DIN_I      : in    std_logic_vector(C_REG_WIDTH - 1 downto 0);
+    DIN_LOAD_I : in    std_logic_vector(C_REG_WIDTH - 1 downto 0);
+    RD_I       : in    std_logic_vector(C_REG_WIDTH - 1 downto 0);
+    RD_LOAD_I  : in    std_logic_vector(C_REG_WIDTH - 1 downto 0);
+    DOUT1_O    : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
+    DOUT2_O    : out   std_logic_vector(C_REG_WIDTH - 1 downto 0)
   );
 end entity risc_v2_reg_file;
 
 architecture rtl of risc_v2_reg_file is
 
-  type rf_t is array(0 to 2 ** rd'length - 1) of std_logic_vector(din'length - 1 downto 0);
+  type rf_t is array(0 to 2 ** RD_I'length - 1) of std_logic_vector(DIN_I'length - 1 downto 0);
 
-  signal rf : rf_t;
+  shared variable rf : rf_t;
 
 begin
 
-  process (clk, reset) is
+  if_data : process (CLK_I, RESET_I) is
   begin
 
-    if (reset = '1') then
-      rf <= (others => (others => '0'));
-    elsif rising_edge(clk) then
-      if (we = '1') then
-        rf(to_integer(unsigned(rd))) <= din;
+    if (RESET_I = '1') then
+      rf := (others => (others => '0'));
+    elsif rising_edge(CLK_I) then
+      if (WE_I = '1') then
+        rf(to_integer(unsigned(RD_I))) := DIN_I;
       end if;
     end if;
 
-  end process;
+  end process if_data;
 
-  -- Escritura síncrona
-  dout1 <= rf(to_integer(unsigned(rs1))); -- Lectura asíncrona
-  dout2 <= rf(to_integer(unsigned(rs2))); -- Lectura asíncrona
+  if_load : process (CLK_I, RESET_I) is
+  begin
+
+    if rising_edge(CLK_I) then
+      if (WE_I = '1') then
+        if (LOAD_I = '1') then
+          rf(to_integer(unsigned(RD_LOAD_I))) := DIN_LOAD_I;
+        end if;
+      end if;
+    end if;
+
+  end process if_load;
+
+  -- Always 0 in register 0x0
+  DOUT1_O <= (others => '0') when RS1_I = (others => '0') else
+             rf(to_integer(unsigned(RS1_I)));
+  DOUT2_O <= (others => '0') when RS2_I = (others => '0') else
+             rf(to_integer(unsigned(RS2_I)));
 
 end architecture rtl;
