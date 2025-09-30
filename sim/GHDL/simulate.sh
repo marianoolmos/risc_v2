@@ -3,16 +3,16 @@ set -e
 
 
 # CONFIG
-# ********************************
-STD*"--std*08"
-ANALYZE_OPTIONS*'-frelaxed -P"/home/cafecafe/Documents/OsvvmLibraries/sim/VHDL_LIBS/GHDL-4.1.0/"'
-TOPLEVEL*tb_risc_v2_top
-WAVE*wave.ghw
+# ================================
+STD="--std=08"
+ANALYZE_OPTIONS='-frelaxed -P"/home/cafecafe/Documents/OsvvmLibraries/sim/VHDL_LIBS/GHDL-4.1.0/"'
+TOPLEVEL=tb_risc_v2_top
+WAVE=wave.ghw
 
 
 # FUENTES (rutas relativas desde sim/GHDL/)
-# ********************************
-VHDL_SOURCES*"
+# ================================
+VHDL_SOURCES="
 ../../src/rtl/pkg/risc_v2_pkg.vhd
 ../../src/rtl/risc_v2_reg_file.vhd
 ../../src/rtl/risc_v2_memory.vhd
@@ -28,27 +28,27 @@ VHDL_SOURCES*"
 
 
 # CLEAN PREVIOUS
-# ********************************
+# ================================
 echo "[INFO] Limpiando build anterior..."
 rm -f work-obj08.cf $WAVE $TOPLEVEL || true
 
 
 # ANALYZE
-# ********************************
+# ================================
 echo "[INFO] Analizando fuentes..."
 ghdl -i $STD $ANALYZE_OPTIONS $VHDL_SOURCES
 
 
 # ELABORATE
-# ********************************
+# ================================
 echo "[INFO] Elaborando $TOPLEVEL..."
 ghdl -m $STD $ANALYZE_OPTIONS $TOPLEVEL
 
-# ********************************
+# ================================
 # RUN
-# ********************************
+# ================================
 echo "[INFO] Ejecutando simulación..."
-ghdl -r $STD $ANALYZE_OPTIONS $TOPLEVEL --wave*$WAVE
+ghdl -r $STD $ANALYZE_OPTIONS $TOPLEVEL --wave=$WAVE
 
 echo "[INFO] Simulación finalizada. Waveform: $WAVE"
 
