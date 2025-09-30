@@ -43,13 +43,13 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-
+use std.env.all;
 entity tb_risc_v2_top is
 end;
 
 architecture bench of tb_risc_v2_top is
   constant clk_period : time := 20 ns;
-  signal CLK : std_logic;
+  signal CLK : std_logic:='0';
   signal RESET : std_logic;
 begin
 
@@ -59,5 +59,12 @@ begin
     RESET => RESET
   );
  clk <= not clk after clk_period/2;
+
+ process is
+ begin
+  wait for 1000 ns;
+
+  finish;
+ end process;
 
 end;
