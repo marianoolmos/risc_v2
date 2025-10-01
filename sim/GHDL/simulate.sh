@@ -5,9 +5,9 @@ set -e
 # CONFIG
 # ================================
 STD="--std=08"
-ANALYZE_OPTIONS='-frelaxed -P"/home/cafecafe/Documents/OsvvmLibraries/sim/VHDL_LIBS/GHDL-4.1.0/"'
+ANALYZE_OPTIONS='-frelaxed -Wno-shared -Wno-hide -P/home/cafecafe/Documents/OsvvmLibraries/sim/VHDL_LIBS/GHDL-4.1.0'
 TOPLEVEL=tb_risc_v2_top
-WAVE=wave.ghw
+WAVE=wave.fst
 
 
 # FUENTES (rutas relativas desde sim/GHDL/)
@@ -48,7 +48,7 @@ ghdl -m $STD $ANALYZE_OPTIONS $TOPLEVEL
 # RUN
 # ================================
 echo "[INFO] Ejecutando simulación..."
-ghdl -r $STD $ANALYZE_OPTIONS $TOPLEVEL --wave=$WAVE
+ghdl -r $STD $ANALYZE_OPTIONS $TOPLEVEL --fst=$WAVE
 
 echo "[INFO] Simulación finalizada. Waveform: $WAVE"
 
