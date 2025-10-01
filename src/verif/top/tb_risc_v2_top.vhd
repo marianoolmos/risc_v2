@@ -44,13 +44,18 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.env.all;
+
+library osvvm;
+  context osvvm.osvvmcontext;
+  use osvvm.scoreboardpkg_slv.all;
+
 entity tb_risc_v2_top is
 end;
 
 architecture bench of tb_risc_v2_top is
   constant clk_period : time := 20 ns;
   signal CLK : std_logic:='0';
-  signal RESET : std_logic;
+  signal RESET : std_logic:='0';
 begin
 
   risc_v2_top_inst : entity work.risc_v2_top
@@ -59,7 +64,7 @@ begin
     RESET => RESET
   );
  clk <= not clk after clk_period/2;
-
+ CreateReset(RESET,'1',CLK,10 ns);
  process is
  begin
   wait for 1000 ns;
