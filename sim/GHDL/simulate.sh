@@ -25,30 +25,36 @@ VHDL_SOURCES="
 ../../src/rtl/risc_v2_top.vhd
 ../../src/verif/top/tb_risc_v2_top.vhd
 "
+# ASSEMBLE
+# ================================
+printf "\033[32m[INFO] Assembling Code\033[0m\n"
 
+cd ../../assembler
+python build.py
 
 # CLEAN PREVIOUS
 # ================================
-echo "[INFO] Limpiando build anterior..."
+printf "\033[32m[INFO] Limpiando build anterior...\033[0m\n"
+cd ./../sim/GHDL
 rm -f work-obj08.cf $WAVE $TOPLEVEL || true
 
 
 # ANALYZE
 # ================================
-echo "[INFO] Analizando fuentes..."
+printf "\033[32m[INFO] Analizando fuentes...\033[0m\n"
 ghdl -i $STD $ANALYZE_OPTIONS $VHDL_SOURCES
 
 
 # ELABORATE
 # ================================
-echo "[INFO] Elaborando $TOPLEVEL..."
+printf "\033[32m[INFO] Elaborando $TOPLEVEL...\033[0m\n"
 ghdl -m $STD $ANALYZE_OPTIONS $TOPLEVEL
 
 # ================================
 # RUN
 # ================================
-echo "[INFO] Ejecutando simulación..."
+printf "\033[32m[INFO] Ejecutando simulación...\033[0m\n"
 ghdl -r $STD $ANALYZE_OPTIONS $TOPLEVEL --fst=$WAVE
 
-echo "[INFO] Simulación finalizada. Waveform: $WAVE"
+printf "\033[32m[INFO] Simulación finalizada. Waveform: $WAVE\033[0m\n"
 
