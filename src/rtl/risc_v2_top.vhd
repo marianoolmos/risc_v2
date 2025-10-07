@@ -56,10 +56,10 @@ end entity risc_v2_top;
 architecture rtl of risc_v2_top is
 
   signal s_if_instr_i : t_dp_in;
-  signal s_if_instr_o : t_dp_out;
+  signal instr_data : std_logic_vector(C_MEM_WIDTH - 1 downto 0);
 
   signal s_if_ram_dat_i  : t_dp_in;
-  signal s_if_ram_data_o : t_dp_out;
+  signal ram_data : std_logic_vector(C_MEM_WIDTH - 1 downto 0);
 
 begin
 
@@ -68,9 +68,9 @@ begin
     port map (
       clk      => CLK,
       port_a_i => s_if_instr_i,
-      port_a_o => s_if_instr_o,
+      port_a_o => instr_data,
       port_b_i => s_if_ram_dat_i,
-      port_b_o => s_if_ram_data_o
+      port_b_o => ram_data
     );
 
   risc_v2_core_inst : entity work.risc_v2_core
@@ -78,9 +78,9 @@ begin
       clk           => CLK,
       reset         => RESET,
       if_instr_o    => s_if_instr_i,
-      if_instr_i    => s_if_instr_o,
+      instr_data    => instr_data,
       if_ram_data_o => s_if_ram_dat_i,
-      if_ram_data_i => s_if_ram_data_o
+      ram_data => ram_data
     );
 
 end architecture rtl;

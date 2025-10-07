@@ -7,7 +7,9 @@ entity risc_v2_reg_file is
   port (
     CLK_I     : in  std_logic;
     RESET_I   : in  std_logic;
-    IF_REG_I  : in  t_reg_in;            
+    RS1       : in    std_logic_vector(4 downto 0);
+    RS2       : in    std_logic_vector(4 downto 0);
+    IF_REG_I,IF_REG_LOAD_I  : in  t_reg_in;            
     DOUT1_O   : out std_logic_vector(C_REG_WIDTH-1 downto 0);
     DOUT2_O   : out std_logic_vector(C_REG_WIDTH-1 downto 0)
   );
@@ -46,19 +48,19 @@ begin
       end if;
 
       -- Puerto de load (WB) independiente; prioridad sobre EX si coincide dirección
-      if IF_REG_I.LOAD = '1' then
-        if reg_idx(IF_REG_I.RD_LOAD) /= ZERO_REG then
-          rf(reg_idx(IF_REG_I.RD_LOAD)) <= IF_REG_I.DIN_LOAD;
+      if IF_REG_LOAD_I.WE = '1' then
+        if reg_idx(IF_REG_LOAD_I.RD) /= ZERO_REG then
+          rf(reg_idx(IF_REG_LOAD_I.RD)) <= IF_REG_LOAD_I.DIN;
         end if;
       end if;
     end if;
   end process;
 
   -- Lecturas combinacionales con siempre lectura a 0 en 0
-  DOUT1_O <= (others => '0') when reg_idx(IF_REG_I.RS1) = ZERO_REG
-             else rf(reg_idx(IF_REG_I.RS1));
+  DOUT1_O <= (others => '0') when reg_idx(RS1) = ZERO_REG
+             else rf(reg_idx(RS1));
 
-  DOUT2_O <= (others => '0') when reg_idx(IF_REG_I.RS2) = ZERO_REG
-             else rf(reg_idx(IF_REG_I.RS2));
+  DOUT2_O <= (others => '0') when reg_idx(RS2) = ZERO_REG
+             else rf(reg_idx(RS2));
 
 end architecture;

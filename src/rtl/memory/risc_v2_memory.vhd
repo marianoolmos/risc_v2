@@ -54,10 +54,10 @@ entity ram_memory is
     CLK    :     std_logic;
     
     PORT_A_I : in    t_dp_in;
-    PORT_A_O : out   t_dp_out;
+    PORT_A_O : out   std_logic_vector(C_MEM_WIDTH - 1 downto 0);
 
     PORT_B_I : in    t_dp_in;
-    PORT_B_O : out   t_dp_out
+    PORT_B_O : out   std_logic_vector(C_MEM_WIDTH - 1 downto 0)
   );
 end entity ram_memory;
 
@@ -73,7 +73,7 @@ begin
     if rising_edge(CLK) then
       s_ram<=ram;
       if (port_a_i.en = '1') then
-        PORT_A_O.DO <= RAM(to_integer(unsigned(port_a_i.addr)));
+        PORT_A_O <= RAM(to_integer(unsigned(port_a_i.addr)));
         if (port_a_i.we = '1') then
 
             if (port_a_i.be = "00") then
@@ -100,13 +100,13 @@ begin
     if rising_edge(CLK) then
       if (port_b_i.en = '1') then
         if (port_b_i.be(1 downto 0) = "00") then
-          PORT_B_O.DO(7 downto 0) <= RAM(to_integer(unsigned(port_b_i.addr)))(7 downto 0);
+          PORT_B_O(7 downto 0) <= RAM(to_integer(unsigned(port_b_i.addr)))(7 downto 0);
         end if;
         if (port_b_i.be(1 downto 0) = "01") then
-          PORT_B_O.DO(15 downto 0) <= RAM(to_integer(unsigned(port_b_i.addr)))(15 downto 0);
+          PORT_B_O(15 downto 0) <= RAM(to_integer(unsigned(port_b_i.addr)))(15 downto 0);
         end if;
         if (port_b_i.be(1 downto 0) = "10") then
-          PORT_B_O.DO(31 downto 0) <= RAM(to_integer(unsigned(port_b_i.addr)))(31 downto 0);
+          PORT_B_O(31 downto 0) <= RAM(to_integer(unsigned(port_b_i.addr)))(31 downto 0);
         end if;
         if (port_b_i.we = '1') then
 

@@ -22,6 +22,7 @@ VHDL_SOURCES="
 ../../src/rtl/execute/risc_v2_alu.vhd 
 ../../src/rtl/execute/risc_v2_excute.vhd 
 ../../src/rtl/decode/risc_v2_reg_file.vhd 
+../../src/rtl/writeback/risc_v2_wb.vhd
 ../../src/rtl/decode/risc_v2_decoder.vhd 
 ../../src/rtl/decode/risc_v2_decode.vhd 
 ../../src/rtl/risc_v2_core.vhd 

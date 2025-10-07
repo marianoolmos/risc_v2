@@ -78,24 +78,13 @@ package risc_v2_pkg is
 
   type t_reg_in is record
     WE       :     std_logic;
-    LOAD     :     std_logic;
-    RS1      :     std_logic_vector(4 downto 0);
-    RS2      :     std_logic_vector(4 downto 0);
-    DIN      :     std_logic_vector(C_REG_WIDTH - 1 downto 0);
-    DIN_LOAD :     std_logic_vector(C_REG_WIDTH - 1 downto 0);
     RD       :     std_logic_vector(4 downto 0);
-    RD_LOAD  :     std_logic_vector(4 downto 0);
+    DIN      :     std_logic_vector(C_REG_WIDTH - 1 downto 0);
   end record t_reg_in;
 
 
-  type t_reg_load is record
-    LOAD     :     std_logic;
-    RD_LOAD  :     std_logic_vector(4 downto 0);
-  end record t_reg_load;
 
-  type t_dp_out is record
-    do :    std_logic_vector(C_MEM_WIDTH - 1 downto 0);
-  end record t_dp_out;
+
 
 
 

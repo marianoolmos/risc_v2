@@ -51,21 +51,24 @@ entity risc_v2_core is
       
         clk   : in std_logic;
         reset : in std_logic;
+
         IF_INSTR_O : out  t_dp_in;
-        IF_INSTR_I : in   t_dp_out;
+        INSTR_DATA : in   std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+
         IF_RAM_DATA_O : out  t_dp_in;
-        IF_RAM_DATA_I : in   t_dp_out
+        RAM_DATA : in   std_logic_vector(C_MEM_WIDTH - 1 downto 0)
         
     );
 end entity;
 
 architecture rtl of risc_v2_core is
-
+    signal we : std_logic;
+    signal RD         :  std_logic_vector(4 downto 0);
     signal ALU_OP     :  std_logic_vector(3 downto 0);
-    signal OP1        :   std_logic_vector(C_REG_WIDTH-1 downto 0);
-    signal OP2        :   std_logic_vector(C_REG_WIDTH-1 downto 0);
-    signal ALU_RESULT : std_logic_vector(C_REG_WIDTH - 1 downto 0);
-
+    signal OP1        :  std_logic_vector(C_REG_WIDTH-1 downto 0);
+    signal OP2        :  std_logic_vector(C_REG_WIDTH-1 downto 0);
+    signal ALU_RESULT :  std_logic_vector(C_REG_WIDTH - 1 downto 0);
+    signal s_if_reg   :  t_reg_in;
 begin
 
  fetch : entity work.risc_v2_fetch
@@ -79,15 +82,18 @@ begin
   port map (
     CLK_I => CLK,
     RESET_I => RESET,
-    IF_RAM_I => IF_RAM_DATA_I,
-    IF_INSTR_I => IF_INSTR_I,
+    RAM_DATA => RAM_DATA,
+    INSTR_DATA => INSTR_DATA,
     IF_RAM_O => IF_RAM_DATA_O,
     ALU_OP => ALU_OP,
     OP1 => OP1,
     OP2 => OP2,
-    ALU_RESULT => ALU_RESULT
+    ALU_RESULT => ALU_RESULT,
+    RD => RD,
+    WE => WE,
+    IF_REG_I => s_if_reg
   );
-  
+
   execute : entity work.risc_v2_execute
   port map (
     CLK => CLK,
@@ -97,6 +103,22 @@ begin
     OP2 => OP2,
     ALU_RESULT => ALU_RESULT
   );
+
+  writeback : entity work.risc_v2_wb
+  port map (
+    SEL => "000",
+    RD => RD,
+    WE => WE,
+    alu_result => ALU_RESULT,
+    mem_rdata => (others => '0') ,
+    pc_plus4 => (others => '0') ,
+    csr_rdata => (others => '0') ,
+    fpu_result => (others => '0') ,
+    rf_waddr => s_if_reg.rd,
+    rf_wdata => s_if_reg.din,
+    rf_we => s_if_reg.we
+  );
+
 
 
 

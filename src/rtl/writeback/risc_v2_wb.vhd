@@ -47,66 +47,36 @@ library ieee;
   use work.risc_v2_pkg.all;
   use work.risc_v2_isa_pkg.all;
 
-entity risc_v2_decode is
+entity risc_v2_wb is
   port (
-    CLK_I      : in    std_logic;
-    RESET_I    : in    std_logic;
-    RAM_DATA   : in    std_logic_vector(C_MEM_WIDTH - 1 downto 0);
-    INSTR_DATA : in    std_logic_vector(C_MEM_WIDTH - 1 downto 0);
-    IF_RAM_O   : out   t_dp_in;
-    ALU_OP     : out   std_logic_vector(3 downto 0);
-    OP1        : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
-    OP2        : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
-    RD         : out   std_logic_vector(4 downto 0);
-    WE         : out std_logic;
-    ALU_RESULT : in    std_logic_vector(C_REG_WIDTH - 1 downto 0);
+    -- Control desde Decode/Control Unit
+    SEL     : in  std_logic_vector(2 downto 0); 
+    RD      : in  std_logic_vector(4 downto 0);
+    WE      : in  std_logic;                    
+    -- Fuentes de datos hacia WB
+    alu_result : in  std_logic_vector(C_REG_WIDTH-1 downto 0);
+    mem_rdata  : in  std_logic_vector(C_REG_WIDTH-1 downto 0);
+    pc_plus4   : in  std_logic_vector(C_REG_WIDTH-1 downto 0); -- para JAL/JALR
+    csr_rdata  : in  std_logic_vector(C_REG_WIDTH-1 downto 0); -- lecturas CSR
+    fpu_result : in  std_logic_vector(C_REG_WIDTH-1 downto 0); -- opcional, si hay FPU
 
-    IF_REG_I : in    t_reg_in
+    -- Salida hacia el banco de registros
+    rf_waddr   : out std_logic_vector(4 downto 0);
+    rf_wdata   : out std_logic_vector(C_REG_WIDTH-1 downto 0);
+    rf_we      : out std_logic
   );
-end entity risc_v2_decode;
+end entity;
 
-architecture rtl of risc_v2_decode is
-
-  signal reg1 : std_logic_vector(C_REG_WIDTH - 1 downto 0);
-  signal reg2 : std_logic_vector(C_REG_WIDTH - 1 downto 0);
-  signal rs1  : std_logic_vector(4 downto 0);
-  signal rs2  : std_logic_vector(4 downto 0);
-
-  signal if_reg_load : t_reg_in;
-
+architecture rtl of risc_v2_wb is
 begin
+  rf_waddr <= RD;
+  rf_we    <= WE when (RD /= x"00000000") else '0'; -- no escribe x0
 
-  risc_v2_decoder_inst : entity work.risc_v2_decoder
-    port map (
-      clk           => CLK_I,
-      reset         => RESET_I,
-      ram_data      => RAM_DATA,
-      if_ram_o      => IF_RAM_O,
-      instr_data    => INSTR_DATA,
-      o_alu_op      => ALU_OP,
-      if_reg_load_o => if_reg_load,
-      rs1           => rs1,
-      rs2           => rs2,
-      reg1_i        => reg1,
-      reg2_i        => reg2,
-      op1           => OP1,
-      op2           => OP2,
-      rd            => RD,
-      WE=> WE,
-      alu_result    => ALU_RESULT
-
-    );
-
-  risc_v2_reg_file_inst : entity work.risc_v2_reg_file
-    port map (
-      clk_i         => CLK_I,
-      reset_i       => RESET_I,
-      if_reg_i      => IF_REG_I,
-      if_reg_load_i => if_reg_load,
-      rs1           => rs1,
-      rs2           => rs2,
-      dout1_o       => reg1,
-      dout2_o       => reg2
-    );
-
-end architecture rtl;
+  with SEL select
+    rf_wdata <= alu_result when "000",
+                mem_rdata  when "001",
+                pc_plus4   when "010",
+                csr_rdata  when "011",
+                fpu_result when "100",
+                (others => '0') when others;
+end architecture;

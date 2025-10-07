@@ -51,17 +51,20 @@ entity risc_v2_decoder is
     port (
         clk   : in std_logic;
         reset : in std_logic;
-        IF_INSTR_I : in    t_dp_out;
-
-        o_alu_op : out std_logic_vector(3 downto 0);
-        IF_RAM_I   : in    t_dp_out;
-        IF_RAM_O : out t_dp_in;
-        IF_REG_O  : out   t_reg_in;
+        INSTR_DATA : in    std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+        RAM_DATA   : in    std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+        RD         : out std_logic_vector(4 downto 0);
+        WE         : out std_logic;
+        o_alu_op   : out std_logic_vector(3 downto 0);
+        IF_RAM_O   : out t_dp_in;
+        IF_REG_LOAD_O  : out   t_reg_in;
+        RS1       : out    std_logic_vector(4 downto 0);
+        RS2       : out    std_logic_vector(4 downto 0);
         REG1_I    : in   std_logic_vector(C_REG_WIDTH - 1 downto 0);
         REG2_I    : in   std_logic_vector(C_REG_WIDTH - 1 downto 0);
-        RS1_VAL_O    : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
-        RS2_VAL_O    : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
-        ALU_RESULT   : in   std_logic_vector(C_REG_WIDTH - 1 downto 0)
+        OP1    : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
+        OP2    : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
+        ALU_RESULT : in   std_logic_vector(C_REG_WIDTH - 1 downto 0)
         
     );
 end entity;
@@ -69,80 +72,79 @@ end entity;
 architecture rtl of risc_v2_decoder is
   signal alu_op : std_logic_vector(3 downto 0);
   signal imm    : t_im;
-  signal rd       : std_logic_vector(4 downto 0);
   signal funct7  : std_logic_vector(6 downto 0); 
   signal funct3  : std_logic_vector(2 downto 0); 
   signal op_code : std_logic_vector(6 downto 0);
-  signal rs2      : std_logic_vector(4 downto 0);
-  signal rs1      : std_logic_vector(4 downto 0);
+  signal s_rs2      : std_logic_vector(4 downto 0);
+  signal s_rs1      : std_logic_vector(4 downto 0);
   signal R_IF_RAM :  t_dp_in;
-  signal r_reg_load,r1_reg_load :t_reg_load;
+  signal r_reg_load,r1_reg_load :t_reg_in;
 
 begin
   o_alu_op<=alu_op;
 
   -- I-type
-  imm.i <= ( IF_INSTR_I.do(31 downto 20) );
+  imm.i <= ( INSTR_DATA(31 downto 20) );
   
   -- S-type
-  imm.s <= (IF_INSTR_I.do(31 downto 25)) & (IF_INSTR_I.do(11 downto 7));
+  imm.s <= (INSTR_DATA(31 downto 25)) & (INSTR_DATA(11 downto 7));
   
   -- B-type
   imm.b <= (
-             IF_INSTR_I.do(31) &
-             IF_INSTR_I.do(30 downto 25) &
-             IF_INSTR_I.do(11 downto 8) &
-             IF_INSTR_I.do(7) &
+             INSTR_DATA(31) &
+             INSTR_DATA(30 downto 25) &
+             INSTR_DATA(11 downto 8) &
+             INSTR_DATA(7) &
              '0'
            );
   -- U-type
-  imm.u <= ( IF_INSTR_I.do(31 downto 12) );
+  imm.u <= ( INSTR_DATA(31 downto 12) );
   
   -- J-type 
   imm.j <= (
-             IF_INSTR_I.do(31) &
-             IF_INSTR_I.do(19 downto 12) &
-             IF_INSTR_I.do(20) &
-             IF_INSTR_I.do(30 downto 21) &
+             INSTR_DATA(31) &
+             INSTR_DATA(19 downto 12) &
+             INSTR_DATA(20) &
+             INSTR_DATA(30 downto 21) &
              '0'
            );
-  funct7     <= (IF_INSTR_I.do(31 downto 25));
-  rs2     <= (IF_INSTR_I.do(24 downto 20));
-  rs1     <= (IF_INSTR_I.do(19 downto 15));
-  funct3  <= (IF_INSTR_I.do(14 downto 12));
-  rd      <= (IF_INSTR_I.do(11 downto 7));
-  op_code <= (IF_INSTR_I.do(6 downto 0));
+  funct7     <= (INSTR_DATA(31 downto 25));
+  s_rs2     <= (INSTR_DATA(24 downto 20));
+  s_rs1     <= (INSTR_DATA(19 downto 15));
+  funct3  <= (INSTR_DATA(14 downto 12));
+  rd      <= (INSTR_DATA(11 downto 7));
+  op_code <= (INSTR_DATA(6 downto 0));
 
   WRITE_BACK : process (clk)
   begin
     if rising_edge(clk) then
       r1_reg_load<= r_reg_load;
-      IF_REG_O.LOAD<=r1_reg_load.LOAD;
-      IF_REG_O.RD_LOAD<=r1_reg_load.RD_LOAD;
+      IF_REG_LOAD_O.WE<=r1_reg_load.WE;
+      IF_REG_LOAD_O.RD<=r1_reg_load.RD;
       IF_RAM_O <= R_IF_RAM;
     end if;
   end process;
   
  with IF_RAM_o.be select
-  IF_REG_O.DIN_LOAD <=
-    std_logic_vector(resize( signed(IF_RAM_I.do(7 downto 0)),  32)) when "000",
-    std_logic_vector(resize( signed(IF_RAM_I.do(15 downto 0)), 32)) when "001",
-    IF_RAM_I.do(31 downto 0)                   when "010",
-    std_logic_vector(resize(unsigned(IF_RAM_I.do(7 downto 0)),  32)) when "100",
-    std_logic_vector(resize(unsigned(IF_RAM_I.do(15 downto 0)), 32)) when "101",
+  IF_REG_LOAD_O.DIN <=
+    std_logic_vector(resize( signed(RAM_DATA(7 downto 0)),  32)) when "000",
+    std_logic_vector(resize( signed(RAM_DATA(15 downto 0)), 32)) when "001",
+    RAM_DATA(31 downto 0)                   when "010",
+    std_logic_vector(resize(unsigned(RAM_DATA(7 downto 0)),  32)) when "100",
+    std_logic_vector(resize(unsigned(RAM_DATA(15 downto 0)), 32)) when "101",
     (others => '0') when others;
 
 
   process (all) is
   begin
     if reset='1' then
-      IF_REG_O.we <= '0';
-      R_REG_LOAD.LOAD <= '0';
+      WE <= '0';
+      r_reg_load.WE <= '0';
       R_IF_RAM.en <= '0';
       R_IF_RAM.we <= '0';
     else
-      IF_REG_O.we <= '0';
-      R_REG_LOAD.LOAD <= '0';
+      WE <= '0';
+      r_reg_load.WE <= '0';
       R_IF_RAM.en <= '0';
       R_IF_RAM.we <= '0';
       case op_code is
@@ -150,38 +152,36 @@ begin
         when OPC_OP =>
 
               alu_op <= funct7(5)  & funct3 ;
-              RS1_VAL_O <= REG1_I;
-              RS2_VAL_O <= REG2_I;
-              IF_REG_O.we <= '1';
-              IF_REG_O.rd <= rd;
-              IF_REG_O.rs1<=rs1;
-              IF_REG_O.rs2<=rs2;
-              IF_REG_O.DIN<=ALU_RESULT;
+              OP1 <= REG1_I;
+              OP2 <= REG2_I;
+              WE <= '1';
+              rs1 <= s_rs1;
+              rs2 <= s_rs2;
+           
 
         when OPC_OP_IMM =>
 
               alu_op <= '0' & funct3 when ((op_code/=ALU_SRL)and (op_code/=ALU_SRA)) else imm.i(10)  & funct3 ;
-              IF_REG_O.we <= '1';
-              IF_REG_O.rd <= rd;
+              WE <= '1';
 
-              IF_REG_O.rs1<=rs1;
-              RS1_VAL_O <= REG1_I;
-              RS2_VAL_O <= x"00000" & imm.i;
-              IF_REG_O.DIN<=ALU_RESULT;
+              rs1 <= s_rs1;
+              OP1 <= REG1_I;
+              OP2 <= x"00000" & imm.i;
+         
 
         when OPC_LOAD =>
 
               alu_op <= ALU_ADD;
               R_IF_RAM.en <= '1';
               R_IF_RAM.be <= funct3;
+              r_reg_load.WE <= '1';
+              r_reg_load.RD <= rd;
               R_IF_RAM.addr <= ALU_RESULT(C_ADDR_WIDTH + 1 downto 2);
-              R_REG_LOAD.LOAD <= '1';
-              R_REG_LOAD.RD_LOAD <=rd;
 
-              IF_REG_O.rs1 <= rs1;
-              IF_REG_O.rs2 <=rs2;
-              RS1_VAL_O <= REG1_I;
-              RS2_VAL_O <= x"00000" & imm.i;
+              rs1 <= s_rs1;
+              rs2 <= s_rs2;
+              OP1 <= REG1_I;
+              OP2 <= x"00000" & imm.i;
               
         when OPC_STORE =>
 
@@ -193,10 +193,10 @@ begin
               R_IF_RAM.di <= REG2_I;
               R_IF_RAM.addr <= ALU_RESULT(C_ADDR_WIDTH + 1 downto 2);
 
-              IF_REG_O.rs1<=rs1;
-              IF_REG_O.rs2<=rs2;
-              RS1_VAL_O <= REG1_I;
-              RS2_VAL_O <= x"00000" & imm.s;
+              rs1 <= s_rs1;
+              rs2 <= s_rs2;
+              OP1 <= REG1_I;
+              OP2 <= x"00000" & imm.s;
           
 
         when OPC_BRANCH =>
@@ -243,11 +243,9 @@ begin
 
         when OPC_LUI =>
 
-          alu_op <= ALU_NOP;
-          IF_REG_O.DIN<= imm.u & x"000";
-
-          IF_REG_O.we <= '1';
-          IF_REG_O.rd <= rd;
+          alu_op <= ALU_ADD;
+          OP1 <= imm.u & x"000";
+          OP2 <= x"00000000";
 
 
         when OPC_AUIPC =>
