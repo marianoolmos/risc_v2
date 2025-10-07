@@ -9,7 +9,7 @@
 --  | @@  | @@ /@@@@@@|  @@@@@@/|  @@@@@@/         \  @/   | @@@@@@@@
 --  |__/  |__/|______/ \______/  \______/           \_/    |________/
 --
--- Module:       RISC_V2_MEMORY
+-- Module:       RISC_V2_FECTH
 -- Description:
 --
 -- Author:       Mariano Olmos Martin
@@ -44,86 +44,35 @@ library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
   use ieee.math_real.all;
-  use ieee.std_logic_textio.all;
-  use std.textio.all;
   use work.risc_v2_pkg.all;
 
-entity ram_memory is
-  
+entity risc_v2_fetch is
   port (
-    CLK    :     std_logic;
-    
-    PORT_A_I : in    t_dp_in;
-    PORT_A_O : out   t_dp_out;
-
-    PORT_B_I : in    t_dp_in;
-    PORT_B_O : out   t_dp_out
+    CLK      : in    std_logic;
+    IF_INSTR_O : out   t_dp_in;
+    RESET    : in    std_logic
   );
-end entity ram_memory;
+end entity risc_v2_fetch;
 
-architecture rtl of ram_memory is
+architecture rtl of risc_v2_fetch is
 
-  shared variable ram : ram_type := initRomFromFile(C_INIT_FILE);
+  signal pc : std_logic_vector(C_MEM_WIDTH - 1 downto 0);
 
 begin
 
-  port_a : process (CLK) is
-  begin
+risc_v2_if_inst : entity work.risc_v2_if
+  port map (
+    CLK => CLK,
+    RESET => RESET,
+    IF_INSTR_O => IF_INSTR_O,
+    PC => PC
+  );
 
-    if rising_edge(CLK) then
-      if (port_a_i.en = '1') then
-        PORT_A_O.DO <= RAM(to_integer(unsigned(port_a_i.addr)));
-        if (port_a_i.we = '1') then
-
-          write_byte_a : for i in 0 to C_NUM_BYTES - 1 loop
-
-            if (port_a_i.be(i) = '1') then
-              ram(to_integer(unsigned(port_a_i.addr)))(8 * i + 7 downto 8 * i) := port_a_i.di(8 * i + 7 downto 8 * i);
-            end if;
-
-          end loop;
-
-        end if;
-      end if;
-    end if;
-
-  end process port_a;
-
-  port_b : process (CLK) is
-  begin
-
-    if rising_edge(CLK) then
-      if (port_b_i.en = '1') then
-        PORT_B_O.DO <= RAM(to_integer(unsigned(port_b_i.addr)));
-        if (port_b_i.we = '1') then
-
-          write_byte_b : for i in 0 to C_NUM_BYTES - 1 loop
-
-            if (port_b_i.be(i) = '1') then
-              ram(to_integer(unsigned(port_b_i.addr)))(8 * i + 7 downto 8 * i) := port_b_i.di(8 * i + 7 downto 8 * i);
-            end if;
-
-          end loop;
-
-        end if;
-      end if;
-    end if;
-
-  end process port_b;
-
-  -- sim
-  -- pragma translate_off
-  assert not (port_a_i.en = '1' and port_a_i.we = '1' and port_b_i.en = '1' and port_b_i.we = '1' and port_a_i.addr = port_b_i.addr)
-    report "ERROR: WRITE/WRITE on the same address"
-    severity error;
-
-  assert not (port_a_i.en = '1' and port_a_i.we = '0' and port_b_i.en = '1' and port_b_i.we = '1' and port_a_i.addr = port_b_i.addr)
-    report "ERROR: READ(A)/WRITE(B) on the same address"
-    severity warning;
-
-  assert not (port_a_i.en = '1' and port_a_i.we = '1' and port_b_i.en = '1' and port_b_i.we = '0' and port_a_i.addr = port_b_i.addr)
-    report "ERROR: WRITE(A)/READ(B) on the same address"
-    severity warning;
--- pragma translate_on
+risc_v2_pc_inst : entity work.risc_v2_pc
+  port map (
+    CLK => CLK,
+    RESET => RESET,
+    PC => PC
+  );
 
 end architecture rtl;

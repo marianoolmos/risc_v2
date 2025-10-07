@@ -9,12 +9,12 @@
 --  | @@  | @@ /@@@@@@|  @@@@@@/|  @@@@@@/         \  @/   | @@@@@@@@
 --  |__/  |__/|______/ \______/  \______/           \_/    |________/
 --
--- Module:       RISC_V2_FECTH
+-- Module:       RISC_V2_EXECUTE
 -- Description:
 --
 -- Author:       Mariano Olmos Martin
 -- Mail  :       mariano.olmos@outlook.com
--- Date:         13/9/2025
+-- Date:         07/10/2025
 -- Version:      v0.0
 -- License: MIT License
 --
@@ -45,41 +45,32 @@ library ieee;
   use ieee.numeric_std.all;
   use ieee.math_real.all;
   use work.risc_v2_pkg.all;
+  use work.risc_v2_isa_pkg.all;
 
-entity risc_v2_fetch is
+entity risc_v2_execute is
   port (
     CLK      : in    std_logic;
-    IF_INSTR_O : out   t_dp_in;
-    RESET    : in    std_logic
+    RESET    : in    std_logic;
+    ALU_OP     : in  std_logic_vector(3 downto 0);
+    OP1        : in  std_logic_vector(C_REG_WIDTH-1 downto 0);
+    OP2        : in  std_logic_vector(C_REG_WIDTH-1 downto 0);
+    ALU_RESULT : out   std_logic_vector(C_REG_WIDTH - 1 downto 0)
   );
-end entity risc_v2_fetch;
+end entity risc_v2_execute;
 
-architecture rtl of risc_v2_fetch is
-
-  signal pc : unsigned(C_MEM_WIDTH - 1 downto 0);
+architecture rtl of risc_v2_execute is
 
 begin
 
-  program_counter : process (CLK) is
-  begin
+risc_v2_alu_inst : entity work.risc_v2_alu
+  port map (
+    CLK => CLK,
+    RESET => RESET,
+    ALU_OP => ALU_OP,
+    OP_1 => OP1,
+    OP_2 => OP2,
+    O_RESULT => ALU_RESULT
+  );
 
-    if rising_edge(CLK) then
-      if (RESET = '1') then
-        pc <= (others => '0');
-      else
-        pc <= pc + 4;
-      end if;
-    end if;
-
-  end process program_counter;
-
-  instr_reg : process (CLK) is
-  begin
-
-    if rising_edge(CLK) then
-      IF_INSTR_O.ADDR <= std_logic_vector(pc(C_ADDR_WIDTH + 1 downto 2));
-    end if;
-
-  end process instr_reg;
 
 end architecture rtl;

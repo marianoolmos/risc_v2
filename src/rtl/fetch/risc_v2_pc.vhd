@@ -9,12 +9,12 @@
 --  | @@  | @@ /@@@@@@|  @@@@@@/|  @@@@@@/         \  @/   | @@@@@@@@
 --  |__/  |__/|______/ \______/  \______/           \_/    |________/
 --
--- Module:       tb_risc_v2_top
+-- Module:       RISC_V2_PC(PROGRAM COUNTER)
 -- Description:
 --
 -- Author:       Mariano Olmos Martin
 -- Mail  :       mariano.olmos@outlook.com
--- Date:         27/9/2025
+-- Date:         13/9/2025
 -- Version:      v0.0
 -- License: MIT License
 --
@@ -41,35 +41,39 @@
 --======================================================================
 
 library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use std.env.all;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+  use ieee.math_real.all;
+  use work.risc_v2_pkg.all;
 
-library osvvm;
-  context osvvm.osvvmcontext;
-  use osvvm.scoreboardpkg_slv.all;
+entity risc_v2_pc is
+  port (
+    CLK      : in    std_logic;
+    RESET    : in    std_logic;
+    PC       : out std_logic_vector(C_MEM_WIDTH - 1 downto 0)
+  );
+end entity;
 
-entity tb_risc_v2_top is
-end;
+architecture rtl of risc_v2_pc is
 
-architecture bench of tb_risc_v2_top is
-  constant clk_period : time := 20 ns;
-  signal CLK : std_logic:='0';
-  signal RESET : std_logic:='1';
+  signal next_pc : unsigned(C_MEM_WIDTH - 1 downto 0);
+
 begin
 
-  risc_v2_top_inst : entity work.risc_v2_top
-  port map (
-    CLK => CLK,
-    RESET => RESET
-  );
- clk <= not clk after clk_period/2;
- CreateReset(RESET,'1',CLK,100 ns);
- process is
- begin
-  wait for 1000 ns;
+  PC <= std_logic_vector(next_pc);
 
-  finish;
- end process;
+  program_counter : process (CLK) is
+  begin
 
-end;
+    if rising_edge(CLK) then
+      if (RESET = '1') then
+        next_pc <= (others => '0');  
+      else
+        next_pc <= next_pc + 4;
+      end if;
+    end if;
+
+  end process program_counter;
+    
+
+end architecture;

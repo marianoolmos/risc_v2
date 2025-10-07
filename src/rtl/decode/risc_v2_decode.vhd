@@ -9,12 +9,12 @@
 --  | @@  | @@ /@@@@@@|  @@@@@@/|  @@@@@@/         \  @/   | @@@@@@@@
 --  |__/  |__/|______/ \______/  \______/           \_/    |________/
 --
--- Module:       tb_risc_v2_top
+-- Module:       RISC_V2_DECODE
 -- Description:
 --
 -- Author:       Mariano Olmos Martin
 -- Mail  :       mariano.olmos@outlook.com
--- Date:         27/9/2025
+-- Date:         07/10/2025
 -- Version:      v0.0
 -- License: MIT License
 --
@@ -41,35 +41,59 @@
 --======================================================================
 
 library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use std.env.all;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+  use ieee.math_real.all;
+  use work.risc_v2_pkg.all;
+  use work.risc_v2_isa_pkg.all;
 
-library osvvm;
-  context osvvm.osvvmcontext;
-  use osvvm.scoreboardpkg_slv.all;
+entity risc_v2_decode is
+  port (
+    CLK_I      : in    std_logic;
+    RESET_I    : in    std_logic;
+    IF_RAM_I   : in    t_dp_out;
+    IF_INSTR_I : in    t_dp_out;
+    IF_RAM_O   : out   t_dp_in;
+    ALU_OP     : out  std_logic_vector(3 downto 0);
+    OP1        : out  std_logic_vector(C_REG_WIDTH-1 downto 0);
+    OP2        : out  std_logic_vector(C_REG_WIDTH-1 downto 0);
+    ALU_RESULT : in   std_logic_vector(C_REG_WIDTH - 1 downto 0)
+  );
+end entity risc_v2_decode;
 
-entity tb_risc_v2_top is
-end;
+architecture rtl of risc_v2_decode is
 
-architecture bench of tb_risc_v2_top is
-  constant clk_period : time := 20 ns;
-  signal CLK : std_logic:='0';
-  signal RESET : std_logic:='1';
+  signal rs1_data : std_logic_vector(C_REG_WIDTH - 1 downto 0);
+  signal rs2_data : std_logic_vector(C_REG_WIDTH - 1 downto 0);
+  signal if_reg   : t_reg_in;
+
 begin
 
-  risc_v2_top_inst : entity work.risc_v2_top
-  port map (
-    CLK => CLK,
-    RESET => RESET
-  );
- clk <= not clk after clk_period/2;
- CreateReset(RESET,'1',CLK,100 ns);
- process is
- begin
-  wait for 1000 ns;
+  risc_v2_decoder_inst : entity work.risc_v2_decoder
+    port map (
+      clk        => CLK_I,
+      reset      => RESET_I,
+      IF_RAM_I   => IF_RAM_I,
+      if_ram_o   => IF_RAM_O,
+      if_instr_i => IF_INSTR_I,
+      o_alu_op   => ALU_OP,
+      if_reg_o   => if_reg,
+      REG1_I => rs1_data,
+      REG2_I => rs2_data,
+      RS1_VAL_O => OP1,
+      RS2_VAL_O => OP2,
+      alu_result => ALU_RESULT
+ 
+    );
 
-  finish;
- end process;
+  risc_v2_reg_file_inst : entity work.risc_v2_reg_file
+    port map (
+      clk_i    => CLK_I,
+      reset_i  => RESET_I,
+      if_reg_i => if_reg,
+      dout1_o  => rs1_data,
+      dout2_o  => rs2_data
+    );
 
-end;
+
+end architecture rtl;

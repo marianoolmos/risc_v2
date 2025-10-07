@@ -13,18 +13,22 @@ WAVE=wave.fst
 # FUENTES (rutas relativas desde sim/GHDL/)
 # ================================
 VHDL_SOURCES="
-../../src/rtl/pkg/risc_v2_pkg.vhd
-../../src/rtl/risc_v2_reg_file.vhd
-../../src/rtl/risc_v2_memory.vhd
-../../src/rtl/risc_v2_fetch.vhd
-../../src/rtl/pkg/risc_v2_isa_pkg.vhd
-../../src/rtl/risc_v2_decoder.vhd
-../../src/rtl/risc_v2_alu.vhd
-../../src/rtl/risc_v2_dec_exe.vhd
-../../src/rtl/risc_v2_core.vhd
-../../src/rtl/risc_v2_top.vhd
-../../src/verif/top/tb_risc_v2_top.vhd
+../../src/rtl/pkg/risc_v2_pkg.vhd 
+../../src/rtl/pkg/risc_v2_isa_pkg.vhd 
+../../src/rtl/memory/risc_v2_memory.vhd 
+../../src/rtl/fetch/risc_v2_pc.vhd 
+../../src/rtl/fetch/risc_v2_if.vhd 
+../../src/rtl/fetch/risc_v2_fetch.vhd 
+../../src/rtl/execute/risc_v2_alu.vhd 
+../../src/rtl/execute/risc_v2_excute.vhd 
+../../src/rtl/decode/risc_v2_reg_file.vhd 
+../../src/rtl/decode/risc_v2_decoder.vhd 
+../../src/rtl/decode/risc_v2_decode.vhd 
+../../src/rtl/risc_v2_core.vhd 
+../../src/rtl/risc_v2_top.vhd 
+../../src/verif/top/tb_risc_v2_top.vhd 
 "
+
 # ASSEMBLE
 # ================================
 printf "\033[32m[INFO] Assembling Code\033[0m\n"

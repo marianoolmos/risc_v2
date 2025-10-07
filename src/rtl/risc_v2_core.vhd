@@ -61,23 +61,41 @@ end entity;
 
 architecture rtl of risc_v2_core is
 
+    signal ALU_OP     :  std_logic_vector(3 downto 0);
+    signal OP1        :   std_logic_vector(C_REG_WIDTH-1 downto 0);
+    signal OP2        :   std_logic_vector(C_REG_WIDTH-1 downto 0);
+    signal ALU_RESULT : std_logic_vector(C_REG_WIDTH - 1 downto 0);
 
 begin
 
- fetch_inst : entity work.risc_v2_fetch
+ fetch : entity work.risc_v2_fetch
   port map (
     CLK => CLK,
     IF_INSTR_O => IF_INSTR_O,
     RESET => RESET
   );
 
- risc_v2_dec_exe_inst : entity work.risc_v2_dec_exe
+ decode : entity work.risc_v2_decode
   port map (
-    clk => clk,
-    reset => reset,
-    IF_RAM_DATA_O => IF_RAM_DATA_O,
-    IF_RAM_DATA_I => IF_RAM_DATA_I,
-    IF_INSTR_DATA_I => IF_INSTR_I
+    CLK_I => CLK,
+    RESET_I => RESET,
+    IF_RAM_I => IF_RAM_DATA_I,
+    IF_INSTR_I => IF_INSTR_I,
+    IF_RAM_O => IF_RAM_DATA_O,
+    ALU_OP => ALU_OP,
+    OP1 => OP1,
+    OP2 => OP2,
+    ALU_RESULT => ALU_RESULT
+  );
+  
+  execute : entity work.risc_v2_execute
+  port map (
+    CLK => CLK,
+    RESET => RESET,
+    ALU_OP => ALU_OP,
+    OP1 => OP1,
+    OP2 => OP2,
+    ALU_RESULT => ALU_RESULT
   );
 
 

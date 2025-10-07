@@ -119,11 +119,11 @@ package risc_v2_isa_pkg is
   -- I: 12 bits, S: 12 bits, B: 13 bits, U: 20 bits, J: 21 bits
 
   type t_im is record
-    i : signed(11 downto 0); -- I-type  imm[11:0]
-    s : signed(11 downto 0); -- S-type  imm[11:0]
-    b : signed(12 downto 0); -- B-type  imm[12:0]
-    u : signed(19 downto 0); -- U-type  imm[31:12] (20 bits)
-    j : signed(20 downto 0); -- J-type  imm[20:0]
+    i : STD_LOGIC_VECTOR(11 downto 0); -- I-type  imm[11:0]
+    s : STD_LOGIC_VECTOR(11 downto 0); -- S-type  imm[11:0]
+    b : STD_LOGIC_VECTOR(12 downto 0); -- B-type  imm[12:0]
+    u : STD_LOGIC_VECTOR(19 downto 0); -- U-type  imm[31:12] (20 bits)
+    j : STD_LOGIC_VECTOR(20 downto 0); -- J-type  imm[20:0]
   end record t_im;
 
   type t_instr_sig is record

@@ -8,7 +8,6 @@ entity risc_v2_reg_file is
     CLK_I     : in  std_logic;
     RESET_I   : in  std_logic;
     IF_REG_I  : in  t_reg_in;            
-    DIN       : in  std_logic_vector(C_REG_WIDTH-1 downto 0); 
     DOUT1_O   : out std_logic_vector(C_REG_WIDTH-1 downto 0);
     DOUT2_O   : out std_logic_vector(C_REG_WIDTH-1 downto 0)
   );
@@ -42,7 +41,7 @@ begin
       -- Puerto de ejecución (EX) escribe si WE=1 y RD/=x0
       if IF_REG_I.WE = '1' then
         if reg_idx(IF_REG_I.RD) /= ZERO_REG then
-          rf(reg_idx(IF_REG_I.RD)) <= DIN;
+          rf(reg_idx(IF_REG_I.RD)) <= IF_REG_I.DIN;
         end if;
       end if;
 
