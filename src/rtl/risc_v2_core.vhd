@@ -58,23 +58,30 @@ entity risc_v2_core is
         IF_RAM_DATA_O : out  t_dp_in;
         RAM_DATA : in   std_logic_vector(C_MEM_WIDTH - 1 downto 0)
         
+        
     );
 end entity;
 
 architecture rtl of risc_v2_core is
-    signal we : std_logic;
-    signal RD         :  std_logic_vector(4 downto 0);
     signal ALU_OP     :  std_logic_vector(3 downto 0);
     signal OP1        :  std_logic_vector(C_REG_WIDTH-1 downto 0);
     signal OP2        :  std_logic_vector(C_REG_WIDTH-1 downto 0);
     signal ALU_RESULT :  std_logic_vector(C_REG_WIDTH - 1 downto 0);
-    signal s_if_reg   :  t_reg_in;
+    signal O_EQ     : std_logic;
+    signal O_LT     : std_logic;
+    signal O_LTU    : std_logic;
+    signal intf_reg,intf_reg_decode   :  t_reg_in;
+    signal new_pc     :  std_logic_vector(C_MEM_WIDTH-1 downto 0);
+    signal new_pc_load :  std_logic;
+    
 begin
 
  fetch : entity work.risc_v2_fetch
   port map (
     CLK => CLK,
     IF_INSTR_O => IF_INSTR_O,
+    new_pc => new_pc,
+    new_pc_load => new_pc_load,
     RESET => RESET
   );
 
@@ -89,9 +96,13 @@ begin
     OP1 => OP1,
     OP2 => OP2,
     ALU_RESULT => ALU_RESULT,
-    RD => RD,
-    WE => WE,
-    IF_REG_I => s_if_reg
+    O_EQ     =>O_EQ,
+    O_LT     =>O_LT,
+    O_LTU    =>O_LTU, 
+    INTF_REG => intf_reg,
+    INTF_REG_DECODE => intf_reg_decode,
+    new_pc => new_pc,
+    new_pc_load => new_pc_load
   );
 
   execute : entity work.risc_v2_execute
@@ -101,22 +112,25 @@ begin
     ALU_OP => ALU_OP,
     OP1 => OP1,
     OP2 => OP2,
-    ALU_RESULT => ALU_RESULT
+    ALU_RESULT => ALU_RESULT,
+    O_EQ     =>O_EQ,
+    O_LT     =>O_LT,
+    O_LTU    =>O_LTU 
   );
 
   writeback : entity work.risc_v2_wb
   port map (
     SEL => "000",
-    RD => RD,
-    WE => WE,
+    RD => intf_reg_decode.RD,
+    WE => intf_reg_decode.WE,
     alu_result => ALU_RESULT,
     mem_rdata => (others => '0') ,
     pc_plus4 => (others => '0') ,
     csr_rdata => (others => '0') ,
     fpu_result => (others => '0') ,
-    rf_waddr => s_if_reg.rd,
-    rf_wdata => s_if_reg.din,
-    rf_we => s_if_reg.we
+    rf_waddr => intf_reg.rd,
+    rf_wdata => intf_reg.din,
+    rf_we => intf_reg.we
   );
 
 

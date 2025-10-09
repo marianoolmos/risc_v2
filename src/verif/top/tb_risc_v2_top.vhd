@@ -67,7 +67,7 @@ begin
  CreateReset(RESET,'1',CLK,100 ns);
  process is
  begin
-  wait for 1000 ns;
+  wait for 10000 ns;
 
   finish;
  end process;

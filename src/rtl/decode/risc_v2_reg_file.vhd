@@ -9,7 +9,7 @@ entity risc_v2_reg_file is
     RESET_I   : in  std_logic;
     RS1       : in    std_logic_vector(4 downto 0);
     RS2       : in    std_logic_vector(4 downto 0);
-    IF_REG_I,IF_REG_LOAD_I  : in  t_reg_in;            
+    INTF_REG,INTF_REG_LOAD  : in  t_reg_in;            
     DOUT1_O   : out std_logic_vector(C_REG_WIDTH-1 downto 0);
     DOUT2_O   : out std_logic_vector(C_REG_WIDTH-1 downto 0)
   );
@@ -41,16 +41,16 @@ begin
       rf <= (others => (others => '0'));
     elsif rising_edge(CLK_I) then
       -- Puerto de ejecución (EX) escribe si WE=1 y RD/=x0
-      if IF_REG_I.WE = '1' then
-        if reg_idx(IF_REG_I.RD) /= ZERO_REG then
-          rf(reg_idx(IF_REG_I.RD)) <= IF_REG_I.DIN;
+      if INTF_REG.WE = '1' then
+        if reg_idx(INTF_REG.RD) /= ZERO_REG then
+          rf(reg_idx(INTF_REG.RD)) <= INTF_REG.DIN;
         end if;
       end if;
 
       -- Puerto de load (WB) independiente; prioridad sobre EX si coincide dirección
-      if IF_REG_LOAD_I.WE = '1' then
-        if reg_idx(IF_REG_LOAD_I.RD) /= ZERO_REG then
-          rf(reg_idx(IF_REG_LOAD_I.RD)) <= IF_REG_LOAD_I.DIN;
+      if INTF_REG_LOAD.WE = '1' then
+        if reg_idx(INTF_REG_LOAD.RD) /= ZERO_REG then
+          rf(reg_idx(INTF_REG_LOAD.RD)) <= INTF_REG_LOAD.DIN;
         end if;
       end if;
     end if;

@@ -50,6 +50,8 @@ entity risc_v2_pc is
   port (
     CLK      : in    std_logic;
     RESET    : in    std_logic;
+    new_pc      : in std_logic_vector(C_MEM_WIDTH-1 downto 0);
+    new_pc_load : in std_logic;
     PC       : out std_logic_vector(C_MEM_WIDTH - 1 downto 0)
   );
 end entity;
@@ -69,7 +71,11 @@ begin
       if (RESET = '1') then
         next_pc <= (others => '0');  
       else
-        next_pc <= next_pc + 4;
+        if new_pc_load = '1' then
+          next_pc<= unsigned(signed(next_pc)+signed(new_pc));
+        else
+          next_pc <= next_pc + 4;
+        end if;
       end if;
     end if;
 

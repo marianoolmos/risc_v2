@@ -54,7 +54,10 @@ entity risc_v2_execute is
     ALU_OP     : in  std_logic_vector(3 downto 0);
     OP1        : in  std_logic_vector(C_REG_WIDTH-1 downto 0);
     OP2        : in  std_logic_vector(C_REG_WIDTH-1 downto 0);
-    ALU_RESULT : out   std_logic_vector(C_REG_WIDTH - 1 downto 0)
+    ALU_RESULT : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
+    O_EQ     : out std_logic;
+    O_LT     : out std_logic;
+    O_LTU    : out std_logic
   );
 end entity risc_v2_execute;
 
@@ -69,8 +72,10 @@ risc_v2_alu_inst : entity work.risc_v2_alu
     ALU_OP => ALU_OP,
     OP_1 => OP1,
     OP_2 => OP2,
-    O_RESULT => ALU_RESULT
-  );
+    O_RESULT => ALU_RESULT,
+    O_EQ     =>O_EQ,
+    O_LT     =>O_LT,
+    O_LTU    =>O_LTU  );
 
 
 end architecture rtl;
