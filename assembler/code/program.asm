@@ -7,7 +7,8 @@
     add  x9,  x3, x2
     sw   x9,  8(x3) 
     lbu  x4, 64(x0)
-    beq  x3, x4, +4 
+    #beq  x3, x4, +4
+    jal  x20, 12 
     addi x5,  x0, 5
     addi x6,  x0, 6
     addi x7,  x0, 7

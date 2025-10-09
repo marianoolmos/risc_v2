@@ -73,7 +73,9 @@ architecture rtl of risc_v2_core is
     signal intf_reg,intf_reg_decode   :  t_reg_in;
     signal new_pc     :  std_logic_vector(C_MEM_WIDTH-1 downto 0);
     signal new_pc_load :  std_logic;
-    
+    signal PC       :  std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+    signal reg_data_mux : std_logic_vector(2 downto 0);
+
 begin
 
  fetch : entity work.risc_v2_fetch
@@ -82,6 +84,7 @@ begin
     IF_INSTR_O => IF_INSTR_O,
     new_pc => new_pc,
     new_pc_load => new_pc_load,
+    PC => PC,
     RESET => RESET
   );
 
@@ -102,7 +105,8 @@ begin
     INTF_REG => intf_reg,
     INTF_REG_DECODE => intf_reg_decode,
     new_pc => new_pc,
-    new_pc_load => new_pc_load
+    new_pc_load => new_pc_load,
+    SEL_REG_FILE=>reg_data_mux
   );
 
   execute : entity work.risc_v2_execute
@@ -120,12 +124,12 @@ begin
 
   writeback : entity work.risc_v2_wb
   port map (
-    SEL => "000",
+    SEL => reg_data_mux,
     RD => intf_reg_decode.RD,
     WE => intf_reg_decode.WE,
     alu_result => ALU_RESULT,
     mem_rdata => (others => '0') ,
-    pc_plus4 => (others => '0') ,
+    pc_plus4 => PC ,
     csr_rdata => (others => '0') ,
     fpu_result => (others => '0') ,
     rf_waddr => intf_reg.rd,

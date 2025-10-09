@@ -52,22 +52,23 @@ entity risc_v2_fetch is
     IF_INSTR_O  : out   t_dp_in;
     new_pc      : in std_logic_vector(C_MEM_WIDTH-1 downto 0);
     new_pc_load : in std_logic;
+    PC       : out std_logic_vector(C_MEM_WIDTH - 1 downto 0);
     RESET       : in    std_logic
   ); 
 end entity risc_v2_fetch;
 
 architecture rtl of risc_v2_fetch is
 
-  signal pc : std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+  signal s_pc : std_logic_vector(C_MEM_WIDTH - 1 downto 0);
 
 begin
-
+  pc<= s_pc;
 risc_v2_if_inst : entity work.risc_v2_if
   port map (
     CLK => CLK,
     RESET => RESET,
     IF_INSTR_O => IF_INSTR_O,
-    PC => PC
+    PC => s_PC
   );
 
 risc_v2_pc_inst : entity work.risc_v2_pc
@@ -76,7 +77,7 @@ risc_v2_pc_inst : entity work.risc_v2_pc
     RESET => RESET,
     new_pc => new_pc,
     new_pc_load => new_pc_load,
-    PC => PC
+    PC => s_PC
   );
 
 end architecture rtl;

@@ -69,7 +69,9 @@ entity risc_v2_decoder is
     O_LT     : in std_logic;
     O_LTU    : in std_logic;
     new_pc   : out std_logic_vector(C_MEM_WIDTH-1 downto 0);
-    new_pc_load : out std_logic
+    new_pc_load : out std_logic;
+    SEL_REG_FILE : out  std_logic_vector(2 downto 0)
+
   );
 end entity risc_v2_decoder;
 
@@ -162,6 +164,7 @@ begin
       R_IF_RAM.en   <= '0';
       R_IF_RAM.we   <= '0';
       new_pc_load<='0';
+      SEL_REG_FILE <="000";
 
       case op_code is
 
@@ -237,11 +240,27 @@ begin
 
         when OPC_JAL =>
 
-          alu_op <= '0' & funct3;
+          alu_op <= ALU_NOP;
+          
+          SEL_REG_FILE <="010";
+          INTF_REG.WE <= '1';
+
+          new_pc <= "000" & x"00" & imm.j ;
+          new_pc_load <= '1';
 
         when OPC_JALR =>
 
-          alu_op <= '0' & funct3;
+          alu_op <= ALU_ADD;
+          
+          SEL_REG_FILE <="010";
+          INTF_REG.WE <= '1';
+
+          RS1         <= s_rs1;
+          OP1         <= REG1_I;
+          OP2         <= "000" & x"00" & imm.i ;
+
+          new_pc <= ALU_RESULT;
+          new_pc_load <= '1';
 
         when OPC_LUI =>
 
