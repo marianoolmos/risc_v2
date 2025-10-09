@@ -27,6 +27,7 @@ VHDL_SOURCES="
 ../../src/rtl/decode/risc_v2_decode.vhd 
 ../../src/rtl/risc_v2_core.vhd 
 ../../src/rtl/risc_v2_top.vhd 
+../../src/verif/top/risc_v2_sb.vhd 
 ../../src/verif/top/tb_risc_v2_top.vhd 
 "
 
