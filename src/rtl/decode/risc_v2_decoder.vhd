@@ -258,7 +258,7 @@ begin
 
           RS1         <= s_rs1;
           OP1         <= REG1_I;
-          OP2         <= "000" & x"00" & imm.i ;
+          OP2         <= x"00000" & imm.i;
 
           new_pc <= ALU_RESULT;
           new_pc_load <= '1';
