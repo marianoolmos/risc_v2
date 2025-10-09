@@ -66,7 +66,8 @@ entity risc_v2_decode is
     new_pc   : out std_logic_vector(C_MEM_WIDTH-1 downto 0);
     new_pc_load : out std_logic;
 
-    SEL_REG_FILE : out  std_logic_vector(2 downto 0)
+    SEL_REG_FILE : out  std_logic_vector(2 downto 0);
+    PC       : in std_logic_vector(C_MEM_WIDTH - 1 downto 0)
   );
 end entity risc_v2_decode;
 
@@ -103,7 +104,8 @@ begin
       O_LTU    =>O_LTU,
       new_pc => new_pc,
       new_pc_load => new_pc_load,
-      SEL_REG_FILE => SEL_REG_FILE
+      SEL_REG_FILE => SEL_REG_FILE,
+      PC => PC
 
     );
 

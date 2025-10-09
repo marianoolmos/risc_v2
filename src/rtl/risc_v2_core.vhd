@@ -57,6 +57,8 @@ entity risc_v2_core is
 
         IF_RAM_DATA_O : out  t_dp_in;
         RAM_DATA : in   std_logic_vector(C_MEM_WIDTH - 1 downto 0)
+
+        
         
         
     );
@@ -106,7 +108,8 @@ begin
     INTF_REG_DECODE => intf_reg_decode,
     new_pc => new_pc,
     new_pc_load => new_pc_load,
-    SEL_REG_FILE=>reg_data_mux
+    SEL_REG_FILE=>reg_data_mux,
+    PC => PC
   );
 
   execute : entity work.risc_v2_execute

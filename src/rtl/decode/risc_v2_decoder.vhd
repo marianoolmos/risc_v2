@@ -70,7 +70,8 @@ entity risc_v2_decoder is
     O_LTU    : in std_logic;
     new_pc   : out std_logic_vector(C_MEM_WIDTH-1 downto 0);
     new_pc_load : out std_logic;
-    SEL_REG_FILE : out  std_logic_vector(2 downto 0)
+    SEL_REG_FILE : out  std_logic_vector(2 downto 0);
+    PC       : in std_logic_vector(C_MEM_WIDTH - 1 downto 0)
 
   );
 end entity risc_v2_decoder;
@@ -271,7 +272,10 @@ begin
 
         when OPC_AUIPC =>
 
-          alu_op <= '0' & funct3;
+          alu_op <= ALU_ADD;
+          OP1    <= PC;
+          OP2    <= imm.u & x"000";
+          INTF_REG.WE <= '1';
 
         when OPC_SYSTEM =>
 
