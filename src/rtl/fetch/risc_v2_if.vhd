@@ -60,14 +60,8 @@ architecture rtl of risc_v2_if is
 begin
   instr_reg : process (all) is
   begin
-    
-      if (RESET = '1') then
-        IF_INSTR_O.en <= '0';
-      else
-        IF_INSTR_O.en <= '1';
-        IF_INSTR_O.ADDR <= std_logic_vector(pc(C_ADDR_WIDTH + 1 downto 2));
-      end if;
 
+    IF_INSTR_O.ADDR <= std_logic_vector(pc(C_ADDR_WIDTH + 1 downto 2));
 
   end process instr_reg;
     

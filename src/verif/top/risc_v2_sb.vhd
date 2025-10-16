@@ -85,12 +85,12 @@ begin
     wait until reset='0';
 
     for i in 0 to 36 loop
-        inst_sb(i)<=NewID(OPCODES(i));
+        inst_sb(i)<=NewID(OPCODES(i) & " DIR :"& to_string(BASE_ADDR+i));
         wait for 0 ns;
         Push(inst_sb(i),x"1CEDCAFE");
     end loop;
 
-    wait for 1500 ns;
+    wait for 15000 ns;
 
     for i in 0 to 36 loop
         Check(inst_sb(i),a_ram(BASE_ADDR+i));

@@ -72,7 +72,6 @@ begin
 
     if rising_edge(CLK) then
       s_ram<=ram;
-      if (port_a_i.en = '1') then
         PORT_A_O <= RAM(to_integer(unsigned(port_a_i.addr)));
         if (port_a_i.we = '1') then
 
@@ -90,7 +89,6 @@ begin
 
         end if;
       end if;
-    end if;
 
   end process port_a;
 
@@ -98,7 +96,6 @@ begin
   begin
 
     if rising_edge(CLK) then
-      if (port_b_i.en = '1') then
         if (port_b_i.be(1 downto 0) = "00") then
           PORT_B_O(7 downto 0) <= RAM(to_integer(unsigned(port_b_i.addr)))(7 downto 0);
         end if;
@@ -124,21 +121,20 @@ begin
 
         end if;
       end if;
-    end if;
 
   end process port_b;
 
   -- sim
   -- pragma translate_off
-  assert not (port_a_i.en = '1' and port_a_i.we = '1' and port_b_i.en = '1' and port_b_i.we = '1' and port_a_i.addr = port_b_i.addr)
+  assert not (port_a_i.we = '1' and port_b_i.we = '1' and port_a_i.addr = port_b_i.addr)
     report "ERROR: WRITE/WRITE on the same address"
     severity error;
 
-  assert not (port_a_i.en = '1' and port_a_i.we = '0' and port_b_i.en = '1' and port_b_i.we = '1' and port_a_i.addr = port_b_i.addr)
+  assert not (port_a_i.we = '0' and port_b_i.we = '1' and port_a_i.addr = port_b_i.addr)
     report "ERROR: READ(A)/WRITE(B) on the same address"
     severity warning;
 
-  assert not (port_a_i.en = '1' and port_a_i.we = '1' and port_b_i.en = '1' and port_b_i.we = '0' and port_a_i.addr = port_b_i.addr)
+  assert not (port_a_i.we = '1' and port_b_i.we = '0' and port_a_i.addr = port_b_i.addr)
     report "ERROR: WRITE(A)/READ(B) on the same address"
     severity warning;
 -- pragma translate_on

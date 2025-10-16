@@ -76,7 +76,7 @@ begin
  CreateReset(RESET,'1',CLK,100 ns);
  process is
  begin
-  wait for 2000 ns;
+  wait for 20000 ns;
 
   ReportAlerts;
   finish;

@@ -55,7 +55,6 @@ entity risc_v2_decoder is
     RAM_DATA      : in    std_logic_vector(C_MEM_WIDTH - 1 downto 0);
     O_ALU_OP      : out   std_logic_vector(3 downto 0);
     IF_RAM_O      : out   t_dp_in;
-    IF_INSTR_O  : out t_dp_in;
     INTF_REG_LOAD : out   t_reg_in;
     INTF_REG      : out   t_reg_in;
     RS1           : out   std_logic_vector(4 downto 0);
@@ -85,8 +84,6 @@ architecture rtl of risc_v2_decoder is
   signal funct7                  : std_logic_vector(6 downto 0);
   signal funct3                  : std_logic_vector(2 downto 0);
   signal op_code                 : std_logic_vector(6 downto 0);
-  signal s_rs2                   : std_logic_vector(4 downto 0);
-  signal s_rs1                   : std_logic_vector(4 downto 0);
   signal r_if_ram                : t_dp_in;
   signal r_reg_load, r1_reg_load : t_reg_in;
   signal branch_taken,flush_if_id : std_logic;
@@ -122,8 +119,8 @@ begin
                   '0'
                 );
   funct7      <= (S_INSTR_DATA(31 downto 25));
-  s_rs2       <= (S_INSTR_DATA(24 downto 20));
-  s_rs1       <= (S_INSTR_DATA(19 downto 15));
+  RS2         <= (S_INSTR_DATA(24 downto 20));
+  RS1         <= (S_INSTR_DATA(19 downto 15));
   funct3      <= (S_INSTR_DATA(14 downto 12));
   rd          <= (S_INSTR_DATA(11 downto 7));
   INTF_REG.rd <= rd;
@@ -156,13 +153,11 @@ begin
     if (RESET = '1') then
       INTF_REG.WE   <= '0';
       r_reg_load.WE <= '0';
-      R_IF_RAM.en   <= '0';
       R_IF_RAM.we   <= '0';
       new_pc_load<='0';
     else
       INTF_REG.WE   <= '0';
       r_reg_load.WE <= '0';
-      R_IF_RAM.en   <= '0';
       R_IF_RAM.we   <= '0';
       new_pc_load<='0';
       SEL_REG_FILE <="000";
@@ -172,8 +167,7 @@ begin
         when OPC_OP =>
 
           alu_op      <= funct7(5) & funct3;
-          RS1         <= s_rs1;
-          RS2         <= s_rs2;
+
           OP1         <= REG1_I;
           OP2         <= REG2_I;
           INTF_REG.WE <= '1';
@@ -182,7 +176,6 @@ begin
 
           alu_op      <= '0' & funct3 when ((op_code /= ALU_SRL) and (op_code /= ALU_SRA)) else imm.i(10) & funct3;
 
-          RS1 <= s_rs1;
           OP1 <= REG1_I;
           OP2 <= x"00000" & imm.i;
           INTF_REG.WE <= '1';
@@ -191,12 +184,10 @@ begin
 
           alu_op        <= ALU_ADD;
 
-          R_IF_RAM.en   <= '1';
+
           R_IF_RAM.be   <= funct3;
           R_IF_RAM.addr <= ALU_RESULT(C_ADDR_WIDTH + 1 downto 2);
 
-          RS1 <= s_rs1;
-          RS2 <= s_rs2;
           OP1 <= REG1_I;
           OP2 <= x"00000" & imm.i;
 
@@ -207,22 +198,18 @@ begin
 
           alu_op <= ALU_ADD;
 
-          R_IF_RAM.en   <= '1';
           R_IF_RAM.we   <= '1';
           R_IF_RAM.be   <= funct3;
           R_IF_RAM.di   <= REG2_I;
           R_IF_RAM.addr <= ALU_RESULT(C_ADDR_WIDTH + 1 downto 2);
 
-          RS1 <= s_rs1;
-          RS2 <= s_rs2;
           OP1 <= REG1_I;
           OP2 <= x"00000" & imm.s;
 
         when OPC_BRANCH =>
 
           alu_op <= ALU_SUB;
-          RS1 <= s_rs1;
-          RS2 <= s_rs2;
+
           OP1 <= REG1_I;
           OP2 <= REG2_I;
           new_pc <= "000" & x"0000" & imm.b ;
@@ -256,7 +243,6 @@ begin
           SEL_REG_FILE <="010";
           INTF_REG.WE <= '1';
 
-          RS1         <= s_rs1;
           OP1         <= REG1_I;
           OP2         <= x"00000" & imm.i;
 
