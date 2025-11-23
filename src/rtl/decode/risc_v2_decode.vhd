@@ -51,9 +51,10 @@ entity risc_v2_decode is
   port (
     CLK_I      : in    std_logic;
     RESET_I    : in    std_logic;
-    RAM_DATA   : in    std_logic_vector(C_MEM_WIDTH - 1 downto 0);
-    INSTR_DATA : in    std_logic_vector(C_MEM_WIDTH - 1 downto 0);
-    IF_RAM_O   : out   t_dp_in;
+
+
+    MEM_INSTR : view t_dp_master_side;
+    MEM_RAM   : view t_dp_master_side;
     ALU_OP     : out   std_logic_vector(3 downto 0);
     OP1        : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
     OP2        : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
@@ -73,8 +74,8 @@ end entity risc_v2_decode;
 
 architecture rtl of risc_v2_decode is
 
-  signal reg1 : std_logic_vector(C_REG_WIDTH - 1 downto 0);
-  signal reg2 : std_logic_vector(C_REG_WIDTH - 1 downto 0);
+  signal val1 : std_logic_vector(C_REG_WIDTH - 1 downto 0);
+  signal val2 : std_logic_vector(C_REG_WIDTH - 1 downto 0);
   signal rs1  : std_logic_vector(4 downto 0);
   signal rs2  : std_logic_vector(4 downto 0);
 
@@ -86,16 +87,15 @@ begin
     port map (
       clk           => CLK_I,
       reset         => RESET_I,
-      ram_data      => RAM_DATA,
-      if_ram_o      => IF_RAM_O,
-      instr_data    => INSTR_DATA,
+      MEM_INSTR=>MEM_INSTR,
+      MEM_RAM =>MEM_RAM,
       o_alu_op      => ALU_OP,
       intf_reg      => INTF_REG_DECODE,
       intf_reg_load => intf_reg_load,
       rs1           => rs1,
       rs2           => rs2,
-      reg1_i        => reg1,
-      reg2_i        => reg2,
+      val1_i        => val1,
+      val2_i        => val2,
       op1           => OP1,
       op2           => OP2,
       alu_result    => ALU_RESULT,
@@ -117,8 +117,8 @@ begin
       intf_reg_load => intf_reg_load,
       rs1           => rs1,
       rs2           => rs2,
-      dout1_o       => reg1,
-      dout2_o       => reg2
+      dout1_o       => val1,
+      dout2_o       => val2
     );
 
 end architecture rtl;

@@ -50,8 +50,8 @@ entity risc_v2_if is
   port (
     CLK      : in    std_logic;
     RESET    : in    std_logic;
-    IF_INSTR_O : out   t_dp_in;
-    PC       : in std_logic_vector(C_MEM_WIDTH - 1 downto 0)
+    PC       : in std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+    ADDR : OUT std_logic_vector(C_ADDR_WIDTH - 1 downto 0);
   );
 end entity;
 
@@ -61,7 +61,7 @@ begin
   instr_reg : process (all) is
   begin
 
-    IF_INSTR_O.ADDR <= std_logic_vector(pc(C_ADDR_WIDTH + 1 downto 2));
+    ADDR <= std_logic_vector(pc(C_ADDR_WIDTH + 1 downto 2));
 
   end process instr_reg;
     

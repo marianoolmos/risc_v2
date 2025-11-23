@@ -72,8 +72,8 @@ begin
     reset => reset
   );
 
- CreateClock(CLK,10 ns);
- CreateReset(RESET,'1',CLK,100 ns);
+ CreateClock(CLK,clk_period);
+ CreateReset(RESET,'1',CLK,clk_period*3);
  process is
  begin
   wait for 20 us;

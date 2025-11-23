@@ -55,12 +55,7 @@ package risc_v2_pkg is
   constant C_MEM_WIDTH  : integer := 32;
   constant C_NUM_BYTES  : integer := C_MEM_WIDTH / 8;
   constant C_MEM_DEPTH  : integer := ((2 ** C_ADDR_WIDTH) - 1);
-  constant C_INIT_FILE  : string  := "rom_init.hex";
-
-  -- Reg File Configuration
-  -- **********************
-  constant C_REG_WIDTH : integer := 32;
-    constant C_NUM_REGS : integer := 32;
+  constant C_INIT_BRAM_DATA  : string  := "/home/cafecafe/Documents/git/risc_v2/src/rtl/memory/init_file.hex";
 
   type ram_type is array (0 to C_MEM_DEPTH) of std_logic_vector(C_MEM_WIDTH - 1 downto 0);
 
@@ -68,25 +63,42 @@ package risc_v2_pkg is
     fname : in string
   ) return ram_type;
 
-  type t_dp_in is record
-    addr :     std_logic_vector(C_ADDR_WIDTH - 1 downto 0);
-    di   :     std_logic_vector(C_MEM_WIDTH - 1 downto 0);
-    en   :     std_logic;
-    we   :     std_logic;
-    be   :     std_logic_vector((C_MEM_WIDTH / 16) downto 0);
-  end record t_dp_in;
+    type t_dp is record
+    addr : std_logic_vector(C_ADDR_WIDTH - 1 downto 0);
+    di   : std_logic_vector(C_MEM_WIDTH - 1 downto 0); -- write data
+    do   : std_logic_vector(C_MEM_WIDTH - 1 downto 0); -- read data (antes PORT_X_O)
+    we   : std_logic;
+    be   : std_logic_vector((C_MEM_WIDTH / 8) - 1 downto 0);
+  end record t_dp;
+
+  view t_dp_ram_side of t_dp is
+    addr, di, we, be : in;
+    do               : out;
+  end view;
+ 
+  
+  -- Vista contraria (master, CPU, controlador, etc.)
+  alias t_dp_master_side is t_dp_ram_side'converse;
+  
+  -- Reg File Configuration
+  -- **********************
+  constant C_REG_WIDTH : integer := 32;
+    constant C_NUM_REGS : integer := 32;
+
+
+
+
 
   type t_reg_in is record
     WE       :     std_logic;
     RD       :     std_logic_vector(4 downto 0);
     DIN      :     std_logic_vector(C_REG_WIDTH - 1 downto 0);
   end record t_reg_in;
-
-
-
-
-
-
+  --Extension DIV
+  constant C_DIV_SERIAL : integer := 1;
+  constant C_DIV_PARALELL : integer := 2;
+  constant C_DIV_PIPELINE : integer := 3;
+  
 
 end package risc_v2_pkg;
 

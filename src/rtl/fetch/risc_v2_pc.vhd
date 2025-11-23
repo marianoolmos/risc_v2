@@ -52,7 +52,7 @@ entity risc_v2_pc is
     RESET    : in    std_logic;
     new_pc      : in std_logic_vector(C_MEM_WIDTH-1 downto 0);
     new_pc_load : in std_logic;
-    PC       : out std_logic_vector(C_MEM_WIDTH - 1 downto 0)
+    PC ,actual_PC      : out std_logic_vector(C_MEM_WIDTH - 1 downto 0)
   );
 end entity;
 
@@ -63,6 +63,7 @@ architecture rtl of risc_v2_pc is
 begin
 
   PC <= std_logic_vector(next_pc);
+  
 
   program_counter : process (CLK) is
   begin
@@ -71,6 +72,7 @@ begin
       if (RESET = '1') then
         next_pc <= (others => '0');  
       else
+        actual_PC <=std_logic_vector(next_pc);
         if new_pc_load = '1' then
           next_pc<= unsigned(signed(next_pc)+signed(new_pc));
         else

@@ -49,25 +49,25 @@ library ieee;
 entity risc_v2_fetch is
   port (
     CLK         : in    std_logic;
-    IF_INSTR_O  : out   t_dp_in;
     new_pc      : in std_logic_vector(C_MEM_WIDTH-1 downto 0);
     new_pc_load : in std_logic;
-    PC       : out std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+    PC           : out std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+    ADDR : OUT std_logic_vector(C_ADDR_WIDTH - 1 downto 0);
     RESET       : in    std_logic
   ); 
 end entity risc_v2_fetch;
 
 architecture rtl of risc_v2_fetch is
 
-  signal s_pc : std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+  signal s_pc,s_act_pc : std_logic_vector(C_MEM_WIDTH - 1 downto 0);
 
 begin
-  pc<= s_pc;
+  pc<= s_act_pc;
 risc_v2_if_inst : entity work.risc_v2_if
   port map (
     CLK => CLK,
     RESET => RESET,
-    IF_INSTR_O => IF_INSTR_O,
+    ADDR => ADDR,
     PC => s_PC
   );
 
@@ -77,7 +77,8 @@ risc_v2_pc_inst : entity work.risc_v2_pc
     RESET => RESET,
     new_pc => new_pc,
     new_pc_load => new_pc_load,
-    PC => s_PC
+    PC => s_PC,
+    actual_pc => s_act_pc
   );
 
 end architecture rtl;

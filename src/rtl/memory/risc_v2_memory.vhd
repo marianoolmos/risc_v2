@@ -48,93 +48,81 @@ library ieee;
   use std.textio.all;
   use work.risc_v2_pkg.all;
 
-entity ram_memory is
+entity dp_bram is
   
   port (
     CLK    :     std_logic;
     
-    PORT_A_I : in    t_dp_in;
-    PORT_A_O : out   std_logic_vector(C_MEM_WIDTH - 1 downto 0);
-
-    PORT_B_I : in    t_dp_in;
-    PORT_B_O : out   std_logic_vector(C_MEM_WIDTH - 1 downto 0)
+    PORT_A : view t_dp_ram_side;
+    PORT_B : view t_dp_ram_side;
   );
-end entity ram_memory;
+end entity dp_bram;
 
-architecture rtl of ram_memory is
+architecture rtl of dp_bram is
 
-  shared variable ram : ram_type := initRomFromFile("/home/cafecafe/Documents/git/risc_v2/src/rtl/pkg/init_file.hex");
-  signal s_ram : ram_type ;
+  shared variable ram : ram_type := initRomFromFile(C_INIT_BRAM_DATA);
+  signal s_ram : ram_type;
 begin
-
-  port_a : process (CLK) is
+  A : process (CLK) is
   begin
 
     if rising_edge(CLK) then
-      s_ram<=ram;
-        PORT_A_O <= RAM(to_integer(unsigned(port_a_i.addr)));
-        if (port_a_i.we = '1') then
+        s_ram<= ram;
 
-            if (port_a_i.be = "00") then
-              ram(to_integer(unsigned(port_a_i.addr)))(7 downto 0) := port_a_i.di(7 downto 0);
-            end if;
+        PORT_A.do <= RAM(to_integer(unsigned(PORT_A.addr)));
 
-            if (port_a_i.be = "01") then
-              ram(to_integer(unsigned(port_a_i.addr)))(15 downto 0) := port_a_i.di(15 downto 0);
-            end if;
+        if (PORT_A.we = '1') then
 
-            if (port_a_i.be = "10") then
-              ram(to_integer(unsigned(port_a_i.addr)))(31 downto 0) := port_a_i.di(31 downto 0);
-            end if;
+          case PORT_A.be is
+            when "0001" =>
+              ram(to_integer(unsigned(PORT_A.addr)))(7 downto 0) := PORT_A.di(7 downto 0);
+            when "0011" =>
+              ram(to_integer(unsigned(PORT_A.addr)))(15 downto 0) := PORT_A.di(15 downto 0);
+            when "1111" =>
+              ram(to_integer(unsigned(PORT_A.addr)))(31 downto 0) := PORT_A.di;         
+            when others =>
+              null;
+          end case;
 
         end if;
-      end if;
+    end if;
 
-  end process port_a;
+  end process A;
 
-  port_b : process (CLK) is
+  B : process (CLK) is
   begin
 
     if rising_edge(CLK) then
-        if (port_b_i.be(1 downto 0) = "00") then
-          PORT_B_O(7 downto 0) <= RAM(to_integer(unsigned(port_b_i.addr)))(7 downto 0);
+      
+        PORT_B.do(31 downto 0) <= RAM(to_integer(unsigned(PORT_B.addr)));
+
+        if (PORT_B.we = '1') then
+          case PORT_B.be is
+            when "0001" =>
+              ram(to_integer(unsigned(PORT_B.addr)))(7 downto 0) := PORT_B.di(7 downto 0);
+            when "0011" =>
+              ram(to_integer(unsigned(PORT_B.addr)))(15 downto 0) := PORT_B.di(15 downto 0);
+            when "1111" =>
+              ram(to_integer(unsigned(PORT_B.addr)))(31 downto 0) := PORT_B.di;         
+            when others =>
+              null;
+          end case;
         end if;
-        if (port_b_i.be(1 downto 0) = "01") then
-          PORT_B_O(15 downto 0) <= RAM(to_integer(unsigned(port_b_i.addr)))(15 downto 0);
-        end if;
-        if (port_b_i.be(1 downto 0) = "10") then
-          PORT_B_O(31 downto 0) <= RAM(to_integer(unsigned(port_b_i.addr)))(31 downto 0);
-        end if;
-        if (port_b_i.we = '1') then
+    end if;
 
-            if (port_b_i.be(1 downto 0) = "00") then
-              ram(to_integer(unsigned(port_b_i.addr)))(7 downto 0) := port_b_i.di(7 downto 0);
-            end if;
-
-            if (port_b_i.be(1 downto 0) = "01") then
-              ram(to_integer(unsigned(port_b_i.addr)))(15 downto 0) := port_b_i.di(15 downto 0);
-            end if;
-
-            if (port_b_i.be(1 downto 0) = "10") then
-              ram(to_integer(unsigned(port_b_i.addr)))(31 downto 0) := port_b_i.di(31 downto 0);
-            end if;
-
-        end if;
-      end if;
-
-  end process port_b;
+  end process B;
 
   -- sim
   -- pragma translate_off
-  assert not (port_a_i.we = '1' and port_b_i.we = '1' and port_a_i.addr = port_b_i.addr)
+  assert not (PORT_A.we = '1' and PORT_B.we = '1' and PORT_A.addr = PORT_B.addr)
     report "ERROR: WRITE/WRITE on the same address"
     severity error;
 
-  assert not (port_a_i.we = '0' and port_b_i.we = '1' and port_a_i.addr = port_b_i.addr)
+  assert not (PORT_A.we = '0' and PORT_B.we = '1' and PORT_A.addr = PORT_B.addr)
     report "ERROR: READ(A)/WRITE(B) on the same address"
     severity warning;
 
-  assert not (port_a_i.we = '1' and port_b_i.we = '0' and port_a_i.addr = port_b_i.addr)
+  assert not (PORT_A.we = '1' and PORT_B.we = '0' and PORT_A.addr = PORT_B.addr)
     report "ERROR: WRITE(A)/READ(B) on the same address"
     severity warning;
 -- pragma translate_on

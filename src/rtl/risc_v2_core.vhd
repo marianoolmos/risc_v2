@@ -49,14 +49,13 @@ library ieee;
 entity risc_v2_core is
     port (
       
-        clk   : in std_logic;
-        reset : in std_logic;
+        CLK_I   : in std_logic;
+        RESET_I : in std_logic;
 
-        IF_INSTR_O : out  t_dp_in;
-        INSTR_DATA : in   std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+        MEM_INSTR : view t_dp_master_side;
+        MEM_RAM   : view t_dp_master_side
 
-        IF_RAM_DATA_O : out  t_dp_in;
-        RAM_DATA : in   std_logic_vector(C_MEM_WIDTH - 1 downto 0)
+
 
         
         
@@ -80,23 +79,23 @@ architecture rtl of risc_v2_core is
 
 begin
 
- fetch : entity work.risc_v2_fetch
+ FETCH : entity work.risc_v2_fetch
   port map (
-    CLK => CLK,
-    IF_INSTR_O => IF_INSTR_O,
+    CLK => CLK_I,
+    RESET => RESET_I,
     new_pc => new_pc,
     new_pc_load => new_pc_load,
     PC => PC,
-    RESET => RESET
+    ADDR => MEM_INSTR.ADDR
+
   );
 
- decode : entity work.risc_v2_decode
+ DECODE : entity work.risc_v2_decode
   port map (
-    CLK_I => CLK,
-    RESET_I => RESET,
-    RAM_DATA => RAM_DATA,
-    INSTR_DATA => INSTR_DATA,
-    IF_RAM_O => IF_RAM_DATA_O,
+    CLK_I => CLK_I,
+    RESET_I => RESET_I,
+    MEM_INSTR =>mem_instr,
+    MEM_RAM   =>mem_RAM,
     ALU_OP => ALU_OP,
     OP1 => OP1,
     OP2 => OP2,
@@ -112,20 +111,21 @@ begin
     PC => PC
   );
 
-  execute : entity work.risc_v2_execute
+  EXECUTE : entity work.ris_v2_div_cfg
   port map (
-    CLK => CLK,
-    RESET => RESET,
-    ALU_OP => ALU_OP,
-    OP1 => OP1,
-    OP2 => OP2,
-    ALU_RESULT => ALU_RESULT,
-    O_EQ     =>O_EQ,
-    O_LT     =>O_LT,
-    O_LTU    =>O_LTU 
+    clk => CLK_I,
+    rst => RESET_I,
+    valid_i => '0',
+    dividend_i => (others => '0') ,
+    divisor_i => (others => '0') ,
+    quotient_o => open,
+    remainder_o => open,
+    ready_o => open,
+    done_o => open
   );
 
-  writeback : entity work.risc_v2_wb
+
+  WRITEBACK : entity work.risc_v2_wb
   port map (
     SEL => reg_data_mux,
     RD => intf_reg_decode.RD,
