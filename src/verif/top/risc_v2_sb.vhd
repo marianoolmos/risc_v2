@@ -73,16 +73,15 @@ architecture scoreboard of risc_v2_sb is
   );
   constant BASE_ADDR : integer := 1000;
 
-  alias a_ram        is << signal .tb_risc_v2_top.risc_v2_top_inst.memory_inst.s_ram : ram_type >>;
+  alias a_ram        is << signal .tb_risc_v2_top.RISCV.MEMORY.s_ram : ram_type >>;
   type t_inst_sb  is array (0 to 36) of scoreboardidtype;
   signal inst_sb : t_inst_sb;
 
 begin
 
-  -- prueba<= a_ram;
   INST_SCOEBOARD : process is
   begin
-    wait until reset='0';
+
 
     for i in 0 to 36 loop
         inst_sb(i)<=NewID(OPCODES(i) & " DIR :"& to_string(BASE_ADDR+i));
@@ -90,13 +89,14 @@ begin
         Push(inst_sb(i),x"1CEDCAFE");
     end loop;
 
-    wait for 15000 ns;
+    WaitForBarrier(OsvvmTestInit);
 
     for i in 0 to 36 loop
         Check(inst_sb(i),a_ram(BASE_ADDR+i));
     end loop;
-    wait;
 
+    WaitForBarrier(TestDone);
+    wait;
   end process;
 
 end architecture scoreboard;

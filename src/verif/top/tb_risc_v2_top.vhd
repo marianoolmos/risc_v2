@@ -60,23 +60,25 @@ architecture bench of tb_risc_v2_top is
 
 begin
 
-  risc_v2_top_inst : entity work.risc_v2_top
+  RISCV : entity work.risc_v2_top
   port map (
     CLK => CLK,
     RESET => RESET
   );
 
-  risc_v2_sb_inst : entity work.risc_v2_sb
+  SB : entity work.risc_v2_sb
   port map (
     clk => clk,
     reset => reset
   );
 
- clk <= not clk after clk_period/2;
+ CreateClock(CLK,10 ns);
  CreateReset(RESET,'1',CLK,100 ns);
  process is
  begin
-  wait for 20000 ns;
+  wait for 20 us;
+  WaitForBarrier(OsvvmTestInit);
+  WaitForBarrier(TestDone);
 
   ReportAlerts;
   finish;
