@@ -1,2 +1,6 @@
-# RISC V2 (_RISC-V-VHDL_)
-A RISC-V processor implemented in VHDL.
+# RISC V2 (RISC-V in VHDL)
+
+RISC V2 is a **32-bit RISC-V processor implemented in VHDL**, using a **classic 5-stage pipeline**:
+                    
+                            
+                                 IF → ID → EX → MEM → WB
