@@ -75,26 +75,60 @@ package risc_v2_pkg is
     addr, di, we, be : in;
     do               : out;
   end view;
- 
   
   -- Vista contraria (master, CPU, controlador, etc.)
   alias t_dp_master_side is t_dp_ram_side'converse;
+  -- ALU
+  --****
+  type t_alu_rec is record
+    OPC     :   std_logic_vector(3 downto 0);
+    OP1        :   std_logic_vector(C_MEM_WIDTH-1 downto 0);
+    OP2        :   std_logic_vector(C_MEM_WIDTH-1 downto 0);
+    RESULT :    std_logic_vector(C_MEM_WIDTH - 1 downto 0);
+    O_EQ       :  std_logic;
+    O_LT       :  std_logic;
+    O_LTU      :  std_logic;
+  end record;
+
+  view t_alu_slave of t_alu_rec is 
+    OPC,OP1,OP2 : in;
+    RESULT,O_EQ,O_LT,O_LTU : out;
+  end view;
+  alias t_alu_master is t_alu_slave'converse;
+  -- DIV EXTENSION
+  -- **********************
+  constant N : integer := 32;
   
+  type t_div_rec is record
+    valid      :  std_logic;  
+    dividend   :  STD_LOGIC_VECTOR(N-1 downto 0); 
+    divisor    :  STD_LOGIC_VECTOR(N-1 downto 0); 
+    quotient   : STD_LOGIC_VECTOR(N-1 downto 0); 
+    remainder  : STD_LOGIC_VECTOR(N-1 downto 0); 
+    ready      : std_logic;                      
+    done       : std_logic;   
+  end record;
+  
+  view t_div_slave of t_div_rec is
+    valid,dividend,divisor : in; 
+    quotient,remainder,ready,done : out;
+  end view;
+  alias t_div_master is t_div_slave'converse;
+
+
   -- Reg File Configuration
   -- **********************
   constant C_REG_WIDTH : integer := 32;
     constant C_NUM_REGS : integer := 32;
-
-
-
-
 
   type t_reg_in is record
     WE       :     std_logic;
     RD       :     std_logic_vector(4 downto 0);
     DIN      :     std_logic_vector(C_REG_WIDTH - 1 downto 0);
   end record t_reg_in;
-  --Extension DIV
+
+  -- Extension DIV
+  -- **************
   constant C_DIV_SERIAL : integer := 1;
   constant C_DIV_PARALELL : integer := 2;
   constant C_DIV_PIPELINE : integer := 3;

@@ -53,15 +53,10 @@ entity risc_v2_decode is
     RESET_I    : in    std_logic;
 
 
-    MEM_INSTR : view t_dp_master_side;
-    MEM_RAM   : view t_dp_master_side;
-    ALU_OP     : out   std_logic_vector(3 downto 0);
-    OP1        : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
-    OP2        : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
-    ALU_RESULT : in    std_logic_vector(C_REG_WIDTH - 1 downto 0);
-    O_EQ       : in std_logic;
-    O_LT       : in std_logic;
-    O_LTU      : in std_logic;
+    MEM_INSTR_INTF : view t_dp_master_side;
+    MEM_RAM_INTF   : view t_dp_master_side;
+    ALU_INTF  : view t_alu_master;
+
     INTF_REG_DECODE : out    t_reg_in;
     INTF_REG : in    t_reg_in;
     new_pc   : out std_logic_vector(C_MEM_WIDTH-1 downto 0);
@@ -83,25 +78,19 @@ architecture rtl of risc_v2_decode is
 
 begin
 
-  risc_v2_decoder_inst : entity work.risc_v2_decoder
+  DECODER : entity work.risc_v2_decoder
     port map (
       clk           => CLK_I,
       reset         => RESET_I,
-      MEM_INSTR=>MEM_INSTR,
-      MEM_RAM =>MEM_RAM,
-      o_alu_op      => ALU_OP,
+      MEM_INSTR_INTF=>MEM_INSTR_INTF,
+      MEM_RAM_INTF =>MEM_RAM_INTF,
+      ALU_INTF=>ALU_INTF,
       intf_reg      => INTF_REG_DECODE,
       intf_reg_load => intf_reg_load,
       rs1           => rs1,
       rs2           => rs2,
       val1_i        => val1,
       val2_i        => val2,
-      op1           => OP1,
-      op2           => OP2,
-      alu_result    => ALU_RESULT,
-      O_EQ     =>O_EQ,
-      O_LT     =>O_LT,
-      O_LTU    =>O_LTU,
       new_pc => new_pc,
       new_pc_load => new_pc_load,
       SEL_REG_FILE => SEL_REG_FILE,
@@ -109,7 +98,7 @@ begin
 
     );
 
-  risc_v2_reg_file_inst : entity work.risc_v2_reg_file
+  REG_FILE : entity work.risc_v2_reg_file
     port map (
       clk_i         => CLK_I,
       reset_i       => RESET_I,

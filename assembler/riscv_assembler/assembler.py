@@ -124,11 +124,32 @@ def assemble_lines(lines, base_address=0):
                 inst = ((funct7 & 0x7F) << 25) | ((shamt & 0x1F) << 20) | ((rs1 & 0x1F) << 15) | ((spec["funct3"] & 0x7) << 12) | ((rd & 0x1F) << 7) | (spec["opcode"] & 0x7F)
             elif m == "jalr":
                 rd = parse_reg(args[0])
+            
                 if len(args) == 2 and '(' in args[1]:
+                    # jalr rd, imm(rs1)
                     imm, rs1 = parse_mem_operand(args[1])
+            
+                elif len(args) == 3:
+                    # Acepta:
+                    #   - jalr rd, imm, rs1
+                    #   - jalr rd, rs1, imm  (estilo GNU)
+                    a1, a2 = args[1], args[2]
+                    # Si el segundo parece registro, interpretamos rd, rs1, imm
+                    try:
+                        rs1_candidate = parse_reg(a1)
+                        imm_candidate = parse_imm(a2)
+                        rs1, imm = rs1_candidate, imm_candidate
+                    except Exception:
+                        # si no, probamos rd, imm, rs1
+                        imm = parse_imm(a1)
+                        rs1 = parse_reg(a2)
                 else:
-                    imm = parse_imm(args[1]); rs1 = parse_reg(args[2])
+                    # fallback: rd, imm, rs1
+                    imm = parse_imm(args[1])
+                    rs1 = parse_reg(args[2])
+            
                 inst = encode_I(imm, rs1, spec["funct3"], rd, spec["opcode"])
+
             else:
                 rd = parse_reg(args[0]); rs1 = parse_reg(args[1]); imm = parse_imm(args[2])
                 inst = encode_I(imm, rs1, spec["funct3"], rd, spec["opcode"])

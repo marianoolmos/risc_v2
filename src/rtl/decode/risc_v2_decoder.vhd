@@ -43,7 +43,6 @@
 library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
-  use ieee.math_real.all;
   use work.risc_v2_pkg.all;
   use work.risc_v2_isa_pkg.all;
 
@@ -53,10 +52,9 @@ entity risc_v2_decoder is
     RESET         : in    std_logic;
 
 
-    MEM_INSTR : view t_dp_master_side;
-    MEM_RAM   : view t_dp_master_side;
-    
-    O_ALU_OP      : out   std_logic_vector(3 downto 0);
+    MEM_INSTR_INTF : view t_dp_master_side;
+    MEM_RAM_INTF   : view t_dp_master_side;
+    ALU_INTF  : view t_alu_master;
     
     INTF_REG_LOAD : out   t_reg_in;
     INTF_REG      : out   t_reg_in;
@@ -65,12 +63,6 @@ entity risc_v2_decoder is
     val1_I        : in    std_logic_vector(C_REG_WIDTH - 1 downto 0);
     val2_I        : in    std_logic_vector(C_REG_WIDTH - 1 downto 0);
 
-    OP1           : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
-    OP2           : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
-    ALU_RESULT    : in    std_logic_vector(C_REG_WIDTH - 1 downto 0);
-    O_EQ     : in std_logic;
-    O_LT     : in std_logic;
-    O_LTU    : in std_logic;
 
     new_pc   : out std_logic_vector(C_MEM_WIDTH-1 downto 0);
     new_pc_load : out std_logic;
@@ -95,8 +87,8 @@ architecture rtl of risc_v2_decoder is
 
 begin
 
-  O_ALU_OP <= alu_op;
-  s_INSTR_DATA <= MEM_INSTR.DO when flush_if_id = '0' else NOP;
+  ALU_INTF.OPC <= alu_op;
+  s_INSTR_DATA <= MEM_INSTR_INTF.DO when flush_if_id = '0' else NOP;
 
   -- I-type
   imm.i <= (S_INSTR_DATA(31 downto 20));
@@ -138,18 +130,18 @@ begin
       r1_reg_load      <= r_reg_load;
       INTF_REG_LOAD.WE <= r1_reg_load.WE;
       INTF_REG_LOAD.RD <= r1_reg_load.RD;
-      MEM_RAM         <= r_if_ram;
+      MEM_RAM_INTF         <= r_if_ram;
       flush_if_id <= new_pc_load;
     end if;
 
   end process;
 
-  with MEM_RAM.be select INTF_REG_LOAD.DIN <=
-    std_logic_vector(resize(signed(MEM_RAM.DO(7 downto 0)),  32)) when "0000",
-    std_logic_vector(resize(signed(MEM_RAM.DO(15 downto 0)), 32)) when "0001",
-    MEM_RAM.DO(31 downto 0) when "0010",
-    std_logic_vector(resize(unsigned(MEM_RAM.DO(7 downto 0)),  32)) when "1000",
-    std_logic_vector(resize(unsigned(MEM_RAM.DO(15 downto 0)), 32)) when "1001",
+  with MEM_RAM_INTF.be select INTF_REG_LOAD.DIN <=
+    std_logic_vector(resize(signed(MEM_RAM_INTF.DO(7 downto 0)),  32)) when "0000",
+    std_logic_vector(resize(signed(MEM_RAM_INTF.DO(15 downto 0)), 32)) when "0001",
+    MEM_RAM_INTF.DO(31 downto 0) when "0010",
+    std_logic_vector(resize(unsigned(MEM_RAM_INTF.DO(7 downto 0)),  32)) when "1000",
+    std_logic_vector(resize(unsigned(MEM_RAM_INTF.DO(15 downto 0)), 32)) when "1001",
     (others => '0') when others;
 
   process (all) is
@@ -173,16 +165,16 @@ begin
 
           alu_op      <= funct7(5) & funct3;
 
-          OP1         <= val1_I;
-          OP2         <= val2_I;
+          ALU_INTF.OP1         <= val1_I;
+          ALU_INTF.OP2         <= val2_I;
           INTF_REG.WE <= '1';
 
         when OPC_OP_IMM =>
 
           alu_op      <= '0' & funct3 when ((op_code /= ALU_SRL) and (op_code /= ALU_SRA)) else imm.i(10) & funct3;
 
-          OP1 <= val1_I;
-          OP2 <= x"00000" & imm.i;
+          ALU_INTF.OP1 <= val1_I;
+          ALU_INTF.OP2 <= x"00000" & imm.i;
           INTF_REG.WE <= '1';
 
         when OPC_LOAD =>
@@ -191,10 +183,10 @@ begin
 
 
           R_IF_RAM.be   <= funct3 & '0';
-          R_IF_RAM.addr <= ALU_RESULT(C_ADDR_WIDTH + 1 downto 2);
+          R_IF_RAM.addr <= ALU_INTF.RESULT(C_ADDR_WIDTH + 1 downto 2);
 
-          OP1 <= val1_I;
-          OP2 <= x"00000" & imm.i;
+          ALU_INTF.OP1 <= val1_I;
+          ALU_INTF.OP2 <= x"00000" & imm.i;
 
           r_reg_load.WE <= '1';
           r_reg_load.RD <= rd;
@@ -206,26 +198,26 @@ begin
           R_IF_RAM.we   <= '1';
           R_IF_RAM.be   <= funct3 & '0';
           R_IF_RAM.di   <= val2_I;
-          R_IF_RAM.addr <= ALU_RESULT(C_ADDR_WIDTH + 1 downto 2);
+          R_IF_RAM.addr <= ALU_INTF.RESULT(C_ADDR_WIDTH + 1 downto 2);
 
-          OP1 <= val1_I;
-          OP2 <= x"00000" & imm.s;
+          ALU_INTF.OP1 <= val1_I;
+          ALU_INTF.OP2 <= x"00000" & imm.s;
 
         when OPC_BRANCH =>
 
           alu_op <= ALU_SUB;
 
-          OP1 <= val1_I;
-          OP2 <= val2_I;
+          ALU_INTF.OP1 <= val1_I;
+          ALU_INTF.OP2 <= val2_I;
           new_pc <= "000" & x"0000" & imm.b ;
 
           case funct3 is
-            when F3_BEQ  => branch_taken <= O_EQ;
-            when F3_BNE  => branch_taken <= not O_EQ;
-            when F3_BLT  => branch_taken <= O_LT;
-            when F3_BGE  => branch_taken <= not O_LT;
-            when F3_BLTU => branch_taken <= O_LTU;
-            when F3_BGEU => branch_taken <= not O_LTU;
+            when F3_BEQ  => branch_taken <= ALU_INTF.O_EQ;
+            when F3_BNE  => branch_taken <= not ALU_INTF.O_EQ;
+            when F3_BLT  => branch_taken <= ALU_INTF.O_LT;
+            when F3_BGE  => branch_taken <= not ALU_INTF.O_LT;
+            when F3_BLTU => branch_taken <= ALU_INTF.O_LTU;
+            when F3_BGEU => branch_taken <= not ALU_INTF.O_LTU;
             when others  => branch_taken <= '0';
           end case;
 
@@ -248,24 +240,24 @@ begin
           SEL_REG_FILE <="010";
           INTF_REG.WE <= '1';
 
-          OP1         <= val1_I;
-          OP2         <= x"00000" & imm.i;
+          ALU_INTF.OP1         <= val1_I;
+          ALU_INTF.OP2         <= x"00000" & imm.i;
 
-          new_pc <= ALU_RESULT;
+          new_pc <= ALU_INTF.RESULT;
           new_pc_load <= '1';
 
         when OPC_LUI =>
 
           alu_op <= ALU_ADD;
-          OP1    <= imm.u & x"000";
-          OP2    <= x"00000000";
+          ALU_INTF.OP1    <= imm.u & x"000";
+          ALU_INTF.OP2    <= x"00000000";
           INTF_REG.WE <= '1';
 
         when OPC_AUIPC =>
 
           alu_op <= ALU_ADD;
-          OP1    <= PC;
-          OP2    <= imm.u & x"000";
+          ALU_INTF.OP1    <= PC;
+          ALU_INTF.OP2    <= imm.u & x"000";
           INTF_REG.WE <= '1';
 
         when OPC_SYSTEM =>

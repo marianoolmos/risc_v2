@@ -1,24 +1,56 @@
+--====================================================================
+--
+--   /@@@@@@@  /@@@@@@  /@@@@@@   /@@@@@@        /@@    /@@  /@@@@@@
+--  | @@__  @@|_  @@_/ /@@__  @@ /@@__  @@      | @@   | @@ /@@__  @@
+--  | @@  \ @@  | @@  | @@  \__/| @@  \__/      | @@   | @@|__/  \ @@
+--  | @@@@@@@/  | @@  |  @@@@@@ | @@            |  @@ / @@/  /@@@@@@/
+--  | @@__  @@  | @@   \____  @@| @@             \  @@ @@/  /@@____/
+--  | @@  \ @@  | @@   /@@  \ @@| @@    @@        \  @@@/  | @@
+--  | @@  | @@ /@@@@@@|  @@@@@@/|  @@@@@@/         \  @/   | @@@@@@@@
+--  |__/  |__/|______/ \______/  \______/           \_/    |________/
+--
+-- Module:       RISC_V2_DIV -> 3 ARCHITECTURES(SERIAL,PARALELL,PIPELINE)
+-- Description:
+--
+-- Author:       Mariano Olmos Martin
+-- Mail  :       mariano.olmos@outlook.com
+-- Date:         13/9/2025
+-- Version:      v0.0
+-- License: MIT License
+--
+-- Copyright (c) 2025 Mariano Olmos
+--
+-- Permission is hereby granted, free of charge, to any person obtaining
+-- a copy of this VHDL code and associated documentation files (the
+-- "Software"), to deal in the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject
+-- to the following conditions:
+--
+-- The above copyright notice and this permission notice shall be
+-- included in all copies or substantial portions of the Software.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+-- EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+-- OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+-- NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY
+-- CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+--======================================================================
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.risc_v2_pkg.all;
 
 entity risc_v2_div is
-  generic (
-    -- número de bits de los operandos
-    N : positive := 32 
-  );
   port (
     clk          : in  std_logic;
     rst          : in  std_logic; 
-    valid_i      : in  std_logic;  
 
-    dividend_i   : in  STD_LOGIC_VECTOR(N-1 downto 0); 
-    divisor_i    : in  STD_LOGIC_VECTOR(N-1 downto 0); 
-
-    quotient_o   : out STD_LOGIC_VECTOR(N-1 downto 0); 
-    remainder_o  : out STD_LOGIC_VECTOR(N-1 downto 0); 
-    ready_o      : out std_logic;                      
-    done_o       : out std_logic                       
+    DIV_INTF     : view t_div_master                    
+    
   );
 end entity risc_v2_div;
 
@@ -57,11 +89,11 @@ begin
         r_done   <= '0';
         adjust   <= '1';
 
-      elsif valid_i = '1' then
+      elsif DIV_INTF.valid = '1' then
         -- Carga inicial: mismo comportamiento que en 'serial'
         R        <= (others => '0');
-        C        <= unsigned(dividend_i);
-        B        <= signed('0' & divisor_i);
+        C        <= unsigned(DIV_INTF.DIVIDEND);
+        B        <= signed('0' & DIV_INTF.DIVISOR);
         iter_cnt <= (others => '0');
         start    := '1';
         r_done   <= '0';
@@ -70,7 +102,7 @@ begin
         --1) Inicializar P = (R=0, C=dividendo)
         v_p := (others => '0');
         v_p(2*N downto N) := (others => '0');              -- resto inicial = 0
-        v_p(N-1 downto 0) := unsigned(dividend_i);         -- cociente inicial = dividendo
+        v_p(N-1 downto 0) := unsigned(DIV_INTF.DIVIDEND);         -- cociente inicial = dividendo
         P <= v_p;
 
       elsif start = '1' then
@@ -118,10 +150,10 @@ begin
     end if;
   end process;
 
-  quotient_o  <= std_logic_vector(C);
-  remainder_o <= std_logic_vector(R(N-1 downto 0));
-  ready_o     <= '1' when adjust = '1' else '0'; 
-  done_o      <= r_done;
+  DIV_INTF.QUOTIENT  <= std_logic_vector(C);
+  DIV_INTF.REMAINDER <= std_logic_vector(R(N-1 downto 0));
+  DIV_INTF.READY     <= '1' when adjust = '1' else '0'; 
+  DIV_INTF.DONE      <= r_done;
 
 end architecture serial;
 
@@ -145,13 +177,13 @@ begin
       if rst = '1' then
         B        <= (others => '0');
         r_done<='0';
-      elsif valid_i = '1' then
+      elsif DIV_INTF.VALID = '1' then
         -- Carga inicial: mismo comportamiento que en 'serial'
-        B        <= signed('0' & divisor_i);
+        B        <= signed('0' & DIV_INTF.DIVISOR);
         --1) Inicializar P = (R=0, C=dividendo)
         v_p := (others => '0');
         v_p(2*N downto N) := (others => '0');              -- resto inicial = 0
-        v_p(N-1 downto 0) := unsigned(dividend_i);         -- cociente inicial = dividendo
+        v_p(N-1 downto 0) := unsigned(DIV_INTF.DIVIDEND);         -- cociente inicial = dividendo
         P_array(0) <= v_p;
         r_done<='1';
       else
@@ -194,10 +226,10 @@ begin
       end if;
   end process;
 
-  quotient_o  <= std_logic_vector(P_array(N)(N-1 downto 0));
-  remainder_o <= std_logic_vector(R(N-1 downto 0));
-  ready_o     <= '1'; 
-  done_o      <= r_done;
+  DIV_INTF.QUOTIENT  <= std_logic_vector(P_array(N)(N-1 downto 0));
+  DIV_INTF.REMAINDER <= std_logic_vector(R(N-1 downto 0));
+  DIV_INTF.READY     <= '1'; 
+  DIV_INTF.DONE      <= r_done;
 
 end architecture paralell;
 
@@ -225,13 +257,13 @@ begin
         B_array(0)        <= (others => '0') ;
         P_array(0)       <=  (others => '0') ;
         Valid_array(0)   <= '0' ;
-      elsif valid_i = '1' then
+      elsif DIV_INTF.VALID = '1' then
         -- Carga inicial: mismo comportamiento que en 'serial'
-        B_array(0)        <= signed('0' & divisor_i);
+        B_array(0)        <= signed('0' & DIV_INTF.DIVISOR);
         --1) Inicializar P = (R=0, C=dividendo)
         v_p := (others => '0');
         v_p(2*N downto N) := (others => '0');              
-        v_p(N-1 downto 0) := unsigned(dividend_i);         
+        v_p(N-1 downto 0) := unsigned(DIV_INTF.DIVIDEND);         
         P_array(0) <= v_p;
         Valid_array(0) <= '1';
       else
@@ -285,9 +317,9 @@ begin
   end process;
   
 
-  quotient_o  <= std_logic_vector(P_array(N)(N-1 downto 0));
-  remainder_o <= std_logic_vector(R(N-1 downto 0));
-  ready_o     <= '1'; 
-  done_o      <= Valid_array(N);
+  DIV_INTF.QUOTIENT  <= std_logic_vector(P_array(N)(N-1 downto 0));
+  DIV_INTF.REMAINDER <= std_logic_vector(R(N-1 downto 0));
+  DIV_INTF.READY     <= '1'; 
+  DIV_INTF.DONE      <= Valid_array(N);
 
 end architecture pipeline;

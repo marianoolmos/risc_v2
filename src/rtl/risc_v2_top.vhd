@@ -43,7 +43,6 @@
 library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
-  use ieee.math_real.all;
   use work.risc_v2_pkg.all;
 
 entity risc_v2_top is
@@ -55,15 +54,15 @@ end entity risc_v2_top;
 
 architecture rtl of risc_v2_top is
 
-  signal   mem_instr,mem_ram : t_dp;
+  signal   s_mem_instr,s_mem_ram : t_dp;
 
 begin
 
   MEMORY : entity work.dp_bram
   port map (
     CLK => CLK,
-    PORT_A => mem_instr,
-    PORT_B => mem_ram
+    PORT_A => s_mem_instr,
+    PORT_B => s_mem_ram
   );
 
 
@@ -71,8 +70,8 @@ begin
     port map (
       CLK_I           => CLK,
       RESET_I         => RESET,
-      MEM_INSTR       => mem_instr,
-      MEM_RAM         => mem_ram
+      MEM_INSTR_INTF  => s_mem_instr,
+      MEM_RAM_INTF    => s_mem_ram
 
     );
 

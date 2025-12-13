@@ -49,13 +49,7 @@ entity risc_v2_alu is
   port (
     CLK      : in  std_logic;
     RESET    : in  std_logic;
-    ALU_OP   : in  std_logic_vector(3 downto 0);
-    OP_1      : in  std_logic_vector(C_REG_WIDTH-1 downto 0);
-    OP_2      : in  std_logic_vector(C_REG_WIDTH-1 downto 0);
-    O_RESULT : out std_logic_vector(C_REG_WIDTH-1 downto 0);
-    O_EQ     : out std_logic;
-    O_LT     : out std_logic;
-    O_LTU    : out std_logic
+    ALU_INTF : view t_alu_slave
   );
 end entity risc_v2_alu;
 
@@ -66,46 +60,46 @@ begin
 
 
   
-  process(OP_1, OP_2, ALU_OP)
+  process(ALU_INTF.OP1, ALU_INTF.OP2, ALU_INTF.OPC)
     variable v_sub : signed(C_REG_WIDTH downto 0);
   begin
     
 
-    if (ALU_OP = ALU_SUB or ALU_OP = ALU_SLT or ALU_OP = ALU_SLTU) then
-      v_sub := signed('0' & OP_1) - signed('0' & OP_2);
+    if (ALU_INTF.OPC = ALU_SUB or ALU_INTF.OPC = ALU_SLT or ALU_INTF.OPC = ALU_SLTU) then
+      v_sub := signed('0' & ALU_INTF.OP1) - signed('0' & ALU_INTF.OP2);
     else
       v_sub := (others => '0');  
     end if;
     
-    case ALU_OP is
+    case ALU_INTF.OPC is
       
       when ALU_ADD =>
-        result <= std_logic_vector(signed(OP_1) + signed(OP_2));
+        result <= std_logic_vector(signed(ALU_INTF.OP1) + signed(ALU_INTF.OP2));
       
       when ALU_SUB | ALU_SLT | ALU_SLTU =>
         result <= std_logic_vector(v_sub(C_REG_WIDTH-1 downto 0));
 
-        O_EQ  <= '1' when v_sub = 0 else '0'; 
-        O_LT  <= v_sub(C_REG_WIDTH);
-        O_LTU <= OP_1(C_REG_WIDTH-1) xor OP_2(C_REG_WIDTH-1) xor v_sub(C_REG_WIDTH-1);
+        ALU_INTF.O_EQ  <= '1' when v_sub = 0 else '0'; 
+        ALU_INTF.O_LT  <= v_sub(C_REG_WIDTH);
+        ALU_INTF.O_LTU <= ALU_INTF.OP1(C_REG_WIDTH-1) xor ALU_INTF.OP2(C_REG_WIDTH-1) xor v_sub(C_REG_WIDTH-1);
       
       when ALU_XOR =>
-        result <= OP_1 xor OP_2;
+        result <= ALU_INTF.OP1 xor ALU_INTF.OP2;
       
       when ALU_OR =>
-        result <= OP_1 or OP_2;
+        result <= ALU_INTF.OP1 or ALU_INTF.OP2;
       
       when ALU_AND =>
-        result <= OP_1 and OP_2;
+        result <= ALU_INTF.OP1 and ALU_INTF.OP2;
       
       when ALU_SLL =>
-        result <= std_logic_vector(shift_left(unsigned(OP_1), to_integer(unsigned(OP_2(4 downto 0)))));
+        result <= std_logic_vector(shift_left(unsigned(ALU_INTF.OP1), to_integer(unsigned(ALU_INTF.OP2(4 downto 0)))));
       
       when ALU_SRL =>
-        result <= std_logic_vector(shift_right(unsigned(OP_1), to_integer(unsigned(OP_2(4 downto 0)))));
+        result <= std_logic_vector(shift_right(unsigned(ALU_INTF.OP1), to_integer(unsigned(ALU_INTF.OP2(4 downto 0)))));
       
       when ALU_SRA =>
-        result <= std_logic_vector(shift_right(signed(OP_1), to_integer(unsigned(OP_2(4 downto 0)))));
+        result <= std_logic_vector(shift_right(signed(ALU_INTF.OP1), to_integer(unsigned(ALU_INTF.OP2(4 downto 0)))));
       
       when others =>
         result <= (others => '0');
@@ -114,7 +108,7 @@ begin
     
   end process;
 
-      O_RESULT <= result;
+      ALU_INTF.RESULT <= result;
   
 
 end architecture rtl;

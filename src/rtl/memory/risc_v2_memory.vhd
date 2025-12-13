@@ -43,9 +43,6 @@
 library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
-  use ieee.math_real.all;
-  use ieee.std_logic_textio.all;
-  use std.textio.all;
   use work.risc_v2_pkg.all;
 
 entity dp_bram is

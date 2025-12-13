@@ -39,11 +39,10 @@
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 -- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 --======================================================================
+
 library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
-  use ieee.math_real.all;
-
   use work.risc_v2_pkg.all;
 
 entity risc_v2_core is
@@ -52,30 +51,23 @@ entity risc_v2_core is
         CLK_I   : in std_logic;
         RESET_I : in std_logic;
 
-        MEM_INSTR : view t_dp_master_side;
-        MEM_RAM   : view t_dp_master_side
-
-
-
-        
-        
-        
+        MEM_INSTR_INTF : view t_dp_master_side;
+        MEM_RAM_INTF   : view t_dp_master_side
+ 
     );
 end entity;
 
 architecture rtl of risc_v2_core is
-    signal ALU_OP     :  std_logic_vector(3 downto 0);
-    signal OP1        :  std_logic_vector(C_REG_WIDTH-1 downto 0);
-    signal OP2        :  std_logic_vector(C_REG_WIDTH-1 downto 0);
+  
     signal ALU_RESULT :  std_logic_vector(C_REG_WIDTH - 1 downto 0);
-    signal O_EQ     : std_logic;
-    signal O_LT     : std_logic;
-    signal O_LTU    : std_logic;
     signal intf_reg,intf_reg_decode   :  t_reg_in;
     signal new_pc     :  std_logic_vector(C_MEM_WIDTH-1 downto 0);
     signal new_pc_load :  std_logic;
     signal PC       :  std_logic_vector(C_MEM_WIDTH - 1 downto 0);
     signal reg_data_mux : std_logic_vector(2 downto 0);
+  
+    signal s_div_intf :t_div_rec;
+    signal s_alu_intf :t_alu_rec;
 
 begin
 
@@ -86,7 +78,7 @@ begin
     new_pc => new_pc,
     new_pc_load => new_pc_load,
     PC => PC,
-    ADDR => MEM_INSTR.ADDR
+    INSTR_ADDR => MEM_INSTR_INTF.ADDR
 
   );
 
@@ -94,15 +86,10 @@ begin
   port map (
     CLK_I => CLK_I,
     RESET_I => RESET_I,
-    MEM_INSTR =>mem_instr,
-    MEM_RAM   =>mem_RAM,
-    ALU_OP => ALU_OP,
-    OP1 => OP1,
-    OP2 => OP2,
-    ALU_RESULT => ALU_RESULT,
-    O_EQ     =>O_EQ,
-    O_LT     =>O_LT,
-    O_LTU    =>O_LTU, 
+    MEM_INSTR_INTF =>MEM_INSTR_INTF,
+    MEM_RAM_INTF   =>MEM_RAM_INTF,
+    ALU_INTF => s_alu_intf,
+
     INTF_REG => intf_reg,
     INTF_REG_DECODE => intf_reg_decode,
     new_pc => new_pc,
@@ -111,19 +98,13 @@ begin
     PC => PC
   );
 
-  EXECUTE : entity work.ris_v2_div_cfg
+  EXECUTE : entity work.risc_v2_execute
   port map (
-    clk => CLK_I,
-    rst => RESET_I,
-    valid_i => '0',
-    dividend_i => (others => '0') ,
-    divisor_i => (others => '0') ,
-    quotient_o => open,
-    remainder_o => open,
-    ready_o => open,
-    done_o => open
+    CLK => CLK_I,
+    RESET => RESET_I,
+    ALU_INTF => s_alu_intf,
+    DIV_INTF => s_div_intf
   );
-
 
   WRITEBACK : entity work.risc_v2_wb
   port map (

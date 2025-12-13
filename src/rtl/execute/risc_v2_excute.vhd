@@ -49,30 +49,14 @@ library ieee;
 
 entity risc_v2_execute is
   generic (
-    N                  : integer := 32;
-    ARCHITECTURE_TYPE  : integer := C_DIV_PIPELINE
+    DIV_ARCHITECTURE_TYPE  : integer := C_DIV_PIPELINE
   );
   port (
     CLK      : in    std_logic;
     RESET    : in    std_logic;
-    --ALU INPUTS
-    ALU_OP     : in  std_logic_vector(3 downto 0);
-    OP1        : in  std_logic_vector(C_REG_WIDTH-1 downto 0);
-    OP2        : in  std_logic_vector(C_REG_WIDTH-1 downto 0);
-    --ALU OUTPUTS
-    ALU_RESULT : out   std_logic_vector(C_REG_WIDTH - 1 downto 0);
-    O_EQ     : out std_logic;
-    O_LT     : out std_logic;
-    O_LTU    : out std_logic;
-    --DIV EXT. INPUTS
-    valid_i      : in  std_logic;  
-    dividend_i   : in  STD_LOGIC_VECTOR(N-1 downto 0); 
-    divisor_i    : in  STD_LOGIC_VECTOR(N-1 downto 0); 
-    --DIV EXT. OUTPUTS
-    quotient_o   : out STD_LOGIC_VECTOR(N-1 downto 0); 
-    remainder_o  : out STD_LOGIC_VECTOR(N-1 downto 0); 
-    ready_o      : out std_logic;                      
-    done_o       : out std_logic    
+
+    ALU_INTF : view t_alu_slave;   
+    DIV_INTF : view t_div_slave   
 
   );
 end entity risc_v2_execute;
@@ -81,33 +65,22 @@ architecture rtl of risc_v2_execute is
 
 begin
 
-ALU : entity work.risc_v2_alu
+  ALU : entity work.risc_v2_alu
   port map (
     CLK => CLK,
     RESET => RESET,
-    ALU_OP => ALU_OP,
-    OP_1 => OP1,
-    OP_2 => OP2,
-    O_RESULT => ALU_RESULT,
-    O_EQ     =>O_EQ,
-    O_LT     =>O_LT,
-    O_LTU    =>O_LTU  );
+    ALU_INTF=>ALU_INTF
+ );
 
   DIV : entity work.ris_v2_div_cfg
   generic map (
-    N => N,
-    ARCHITECTURE_TYPE => ARCHITECTURE_TYPE
+    ARCHITECTURE_TYPE => DIV_ARCHITECTURE_TYPE
   )
   port map (
     clk => clk,
     rst => reset,
-    valid_i => valid_i,
-    dividend_i => dividend_i,
-    divisor_i => divisor_i,
-    quotient_o => quotient_o,
-    remainder_o => remainder_o,
-    ready_o => ready_o,
-    done_o => done_o
+    DIV_INTF=> DIV_INTF
+
   );
 
 

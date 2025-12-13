@@ -56,6 +56,8 @@ OPCODES = {
     "slli": {"type":"I","opcode":0b0010011,"funct3":0b001,"funct7":0b0000000},
     "srli": {"type":"I","opcode":0b0010011,"funct3":0b101,"funct7":0b0000000},
     "srai": {"type":"I","opcode":0b0010011,"funct3":0b101,"funct7":0b0100000},
+    "slti":  {"type":"I","opcode":0b0010011,"funct3":0b010},
+    "sltiu": {"type":"I","opcode":0b0010011,"funct3":0b011},
     "lb":   {"type":"I","opcode":0b0000011,"funct3":0b000},
     "lh":   {"type":"I","opcode":0b0000011,"funct3":0b001},
     "lw":   {"type":"I","opcode":0b0000011,"funct3":0b010},
